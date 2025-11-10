@@ -64,7 +64,7 @@ app.*.map.json
 *.iws
 *.ipr
 .claude
-
+git checkout develop
 # macOS (archivos de sistema)
 #####################################
 .DS_Store
