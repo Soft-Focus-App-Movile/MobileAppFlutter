@@ -86,6 +86,7 @@ android/build/
 # iOS / macOS
 # Ignorar directorios de build y archivos de Xcode
 ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
 ios/.build/
 ios/Pods/
 ios/.symlinks/
