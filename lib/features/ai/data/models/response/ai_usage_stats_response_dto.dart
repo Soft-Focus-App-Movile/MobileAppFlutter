@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../../domain/models/ai_usage_stats.dart';
+import '../../../domain/models/ai_usage_stats.dart';
 
 part 'ai_usage_stats_response_dto.g.dart';
 

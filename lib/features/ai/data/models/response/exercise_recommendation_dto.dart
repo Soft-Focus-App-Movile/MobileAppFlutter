@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../../domain/models/exercise_recommendation.dart';
+import '../../../domain/models/exercise_recommendation.dart';
 
 part 'exercise_recommendation_dto.g.dart';
 

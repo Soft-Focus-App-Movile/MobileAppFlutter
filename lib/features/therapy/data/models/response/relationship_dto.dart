@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../../domain/models/therapeutic_relationship.dart';
+import '../../../domain/models/therapeutic_relationship.dart';
 
 part 'relationship_dto.g.dart';
 

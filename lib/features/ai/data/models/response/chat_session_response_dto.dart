@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../../domain/models/chat_session.dart';
+import '../../../domain/models/chat_session.dart';
 
 part 'chat_session_response_dto.g.dart';
 

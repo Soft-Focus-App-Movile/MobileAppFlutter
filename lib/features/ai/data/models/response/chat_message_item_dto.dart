@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../../domain/models/chat_message.dart';
-import '../../../../domain/models/message_role.dart';
+import '../../../domain/models/chat_message.dart';
+import '../../../domain/models/message_role.dart';
 
 part 'chat_message_item_dto.g.dart';
 
