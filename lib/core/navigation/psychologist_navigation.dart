@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+// TODO: Tracking team - Uncomment when using BLoC pattern
+// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/progress/activity_chart.dart';
 import '../widgets/progress/statistics_card.dart';
@@ -224,4 +224,4 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final average = sum / values.length;
     return average.toStringAsFixed(1);
   }
-}
+}*/

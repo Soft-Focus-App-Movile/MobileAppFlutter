@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-import '../../features/tracking/presentation/screens/progress_screen.dart';
-import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+// TODO: Tracking team - Uncomment when using BLoC pattern
+// import '../../features/tracking/presentation/screens/progress_screen.dart';
+// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
 import 'route.dart';
 
 /// Patient user navigation graph.
@@ -67,7 +68,15 @@ List<RouteBase> patientRoutes() {
     GoRoute(
       path: AppRoute.progress.path,
       name: 'progress',
-      builder: (context, state) => const ProgressScreen(),
+      builder: (context, state) {
+        // TODO: Tracking team - Implement ProgressScreen with BLoC
+        return Scaffold(
+          appBar: AppBar(title: const Text('Mi Progreso')),
+          body: const Center(
+            child: Text('TODO: Tracking team - Implementar ProgressScreen con BLoC'),
+          ),
+        );
+      },
     ),
 
     // My Plan Screen (therapy plan assigned by psychologist)
@@ -89,7 +98,15 @@ List<RouteBase> patientRoutes() {
     GoRoute(
       path: AppRoute.checkInForm.path,
       name: 'patient_check_in_form',
-      builder: (context, state) => const CheckInFormScreen(),
+      builder: (context, state) {
+        // TODO: Tracking team - Implement CheckInFormScreen with BLoC
+        return Scaffold(
+          appBar: AppBar(title: const Text('Check-in')),
+          body: const Center(
+            child: Text('TODO: Tracking team - Implementar CheckInFormScreen con BLoC'),
+          ),
+        );
+      },
     ),
   ];
 }
