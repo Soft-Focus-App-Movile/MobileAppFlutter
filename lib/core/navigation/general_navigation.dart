@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-import '../../features/tracking/presentation/screens/diary_screen.dart';
-import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+// TODO: Tracking team - Uncomment when using BLoC pattern
+// import '../../features/tracking/presentation/screens/diary_screen.dart';
+// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+import '../../features/profiles/presentation/pages/general/connect_psychologist_page.dart';
+import '../../features/profiles/presentation/pages/edit/edit_profile_page.dart';
+import '../../features/profiles/presentation/blocs/connect_psychologist/connect_psychologist_bloc.dart';
+import '../../features/profiles/presentation/blocs/profile/profile_bloc.dart';
+import '../../features/profiles/presentation/blocs/profile/profile_event.dart';
+import '../../features/profiles/data/repositories/profile_repository_impl.dart';
+import '../../features/profiles/data/remote/profile_service.dart';
+import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
+import '../../features/therapy/data/services/therapy_service.dart';
+import '../../features/auth/data/local/user_session.dart';
+import '../../core/networking/http_client.dart';
 import 'route.dart';
 
 /// General user navigation graph.
@@ -17,16 +30,29 @@ List<RouteBase> generalRoutes() {
       builder: (context, state) => const GeneralHomePage(),
     ),
 
-    // General Profile Screen
+    // Connect Psychologist Screen
     GoRoute(
-      path: AppRoute.generalProfile.path,
-      name: 'general_profile',
+      path: AppRoute.connectPsychologist.path,
+      name: 'connect_psychologist',
       builder: (context, state) {
-        // TODO: Profile team - Implement GeneralProfilePage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mi Perfil')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar GeneralProfilePage'),
+        final httpClient = HttpClient();
+        final therapyService = TherapyService(httpClient: httpClient);
+        final therapyRepository = TherapyRepositoryImpl(
+          service: therapyService,
+        );
+
+        return BlocProvider(
+          create: (context) => ConnectPsychologistBloc(
+            therapyRepository: therapyRepository,
+          ),
+          child: ConnectPsychologistPage(
+            onNavigateBack: () => context.pop(),
+            onConnectionSuccess: () {
+              context.pop();
+            },
+            onSearchPsychologists: () {
+              context.push(AppRoute.searchPsychologist.path);
+            },
           ),
         );
       },
@@ -37,21 +63,51 @@ List<RouteBase> generalRoutes() {
       path: AppRoute.editProfile.path,
       name: 'edit_profile',
       builder: (context, state) {
-        // TODO: Profile team - Implement EditProfilePage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Editar Perfil')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar EditProfilePage'),
+        final httpClient = HttpClient();
+        final userSession = UserSession();
+        final profileService = ProfileService(httpClient: httpClient);
+        final therapyService = TherapyService(httpClient: httpClient);
+        final therapyRepository = TherapyRepositoryImpl(
+          service: therapyService,
+        );
+        final profileRepository = ProfileRepositoryImpl(
+          service: profileService,
+          therapyRepository: therapyRepository,
+          userSession: userSession,
+        );
+
+        return BlocProvider(
+          create: (context) => ProfileBloc(
+            profileRepository: profileRepository,
+            therapyRepository: therapyRepository,
+            userSession: userSession,
+          )..add(LoadProfile()),
+          child: EditProfilePage(
+            onNavigateBack: () => context.pop(),
           ),
         );
       },
     ),
 
     // Diary Screen
+    // TODO: Tracking team - Uncomment when using BLoC pattern
+    // GoRoute(
+    //   path: AppRoute.diary.path,
+    //   name: 'diary',
+    //   builder: (context, state) => const DiaryScreen(),
+    // ),
     GoRoute(
       path: AppRoute.diary.path,
       name: 'diary',
-      builder: (context, state) => const DiaryScreen(),
+      builder: (context, state) {
+        // TODO: Diary/Tracking team - Implement DiaryPage with BLoC
+        return Scaffold(
+          appBar: AppBar(title: const Text('Mi Diario')),
+          body: const Center(
+            child: Text('TODO: Diary team - Implementar DiaryPage con BLoC'),
+          ),
+        );
+      },
     ),
 
     // Search Psychologist Screen
@@ -59,7 +115,6 @@ List<RouteBase> generalRoutes() {
       path: AppRoute.searchPsychologist.path,
       name: 'search_psychologist',
       builder: (context, state) {
-        // TODO: Psychologist Search team - Implement SearchPsychologistPage
         return Scaffold(
           appBar: AppBar(title: const Text('Buscar Psicólogo')),
           body: const Center(
@@ -69,28 +124,12 @@ List<RouteBase> generalRoutes() {
       },
     ),
 
-    // Connect Psychologist Screen
-    GoRoute(
-      path: AppRoute.connectPsychologist.path,
-      name: 'connect_psychologist',
-      builder: (context, state) {
-        // TODO: Connection team - Implement ConnectPsychologistPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Conectar con Psicólogo')),
-          body: const Center(
-            child: Text('TODO: Connection team - Implementar ConnectPsychologistPage'),
-          ),
-        );
-      },
-    ),
-
     // Check-in Form Screen
-    GoRoute(
-      path: AppRoute.checkInForm.path,
-      name: 'general_check_in_form',
-      builder: (context, state) => const CheckInFormScreen(),
-    ),
-
-
+    // TODO: Tracking team - Uncomment when using BLoC pattern
+    // GoRoute(
+    //   path: AppRoute.checkInForm.path,
+    //   name: 'general_check_in_form',
+    //   builder: (context, state) => const CheckInFormScreen(),
+    // ),
   ];
 }

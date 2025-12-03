@@ -7,9 +7,11 @@ import '../../features/home/presentation/blocs/home/home_bloc.dart';
 import '../../features/home/presentation/blocs/home/home_state.dart';
 import '../../features/home/presentation/blocs/home/home_event.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profiles/presentation/pages/shared/privacy_policy_page.dart';
+import '../../features/profiles/presentation/pages/shared/help_support_page.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../features/auth/domain/models/user_type.dart';
-import '../../core/ui/components/navigation/general_bottom_nav.dart';
+import '../../core/ui/components/navigation/general_scaffold.dart';
 import '../../core/ui/components/navigation/patient_bottom_nav.dart';
 import '../../core/ui/components/navigation/psychologist_bottom_nav.dart';
 import 'route.dart';
@@ -48,7 +50,6 @@ List<RouteBase> sharedRoutes() {
             // GENERAL and PATIENT users
             if (currentUser?.userType == UserType.GENERAL ||
                 currentUser?.userType == UserType.PATIENT) {
-              // Check patient status on first load
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 context.read<HomeBloc>().add(const CheckPatientStatusRequested());
               });
@@ -61,15 +62,14 @@ List<RouteBase> sharedRoutes() {
                     );
                   }
 
-                  // Show Patient or General home based on relationship status
-                  return Scaffold(
-                    bottomNavigationBar: homeState.isPatient
-                        ? const PatientBottomNav()
-                        : const GeneralBottomNav(),
-                    body: homeState.isPatient
-                        ? const PatientHomePage()
-                        : const GeneralHomePage(),
-                  );
+                  if (homeState.isPatient) {
+                    return Scaffold(
+                      bottomNavigationBar: const PatientBottomNav(),
+                      body: const PatientHomePage(),
+                    );
+                  }
+
+                  return const GeneralScaffold();
                 },
               );
             }
@@ -173,12 +173,8 @@ List<RouteBase> sharedRoutes() {
       path: AppRoute.privacyPolicy.path,
       name: 'privacy_policy',
       builder: (context, state) {
-        // TODO: Profile team - Implement PrivacyPolicyPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Política de Privacidad')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar PrivacyPolicyPage'),
-          ),
+        return PrivacyPolicyPage(
+          onNavigateBack: () => context.pop(),
         );
       },
     ),
@@ -188,12 +184,8 @@ List<RouteBase> sharedRoutes() {
       path: AppRoute.helpSupport.path,
       name: 'help_support',
       builder: (context, state) {
-        // TODO: Profile team - Implement HelpSupportPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Ayuda y Soporte')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar HelpSupportPage'),
-          ),
+        return HelpSupportPage(
+          onNavigateBack: () => context.pop(),
         );
       },
     ),
