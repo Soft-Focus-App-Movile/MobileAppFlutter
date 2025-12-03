@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/ui/colors.dart';
 import '../../../../core/common/status.dart';
 import '../../../auth/data/local/user_session.dart';
 import '../../../auth/domain/models/user_type.dart';
@@ -11,6 +12,9 @@ import '../blocs/library/library_event.dart';
 import '../blocs/library/library_state.dart';
 import '../blocs/favorites/favorites_bloc.dart';
 import '../blocs/assignments/assignments_bloc.dart';
+import '../widgets/library_top_bar.dart';
+import '../widgets/library_tabs.dart';
+import '../widgets/search_bar_with_filter.dart';
 import '../widgets/content_card.dart';
 import '../widgets/favorites_tab.dart';
 import '../widgets/assignments_tab.dart';
@@ -23,10 +27,12 @@ class LibraryPage extends StatefulWidget {
   State<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LibraryPageState extends State<LibraryPage> {
   UserType? _userType;
   bool _isLoading = true;
+  String _currentTab = 'content';
+  ContentType _selectedType = ContentType.movie;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -40,30 +46,27 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
     setState(() {
       _userType = user?.userType ?? UserType.GENERAL;
       _isLoading = false;
+      if (_userType == UserType.PATIENT) {
+        _currentTab = 'assignments';
+      }
     });
-
-    final tabCount = _getTabCount();
-    _tabController = TabController(length: tabCount, vsync: this);
   }
 
-  int _getTabCount() {
-    if (_userType == UserType.PATIENT) return 3;
-    return 2;
-  }
-
-  @override
-  void dispose() {
-    if (!_isLoading) {
-      _tabController.dispose();
+  List<ContentType> get _availableTabs {
+    if (_userType == UserType.PSYCHOLOGIST) {
+      return [ContentType.movie, ContentType.music, ContentType.video];
     }
-    super.dispose();
+    return [ContentType.movie, ContentType.music, ContentType.video];
   }
+
+  bool get _isPatient => _userType == UserType.PATIENT;
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: black,
+        body: Center(child: CircularProgressIndicator(color: green49)),
       );
     }
 
@@ -72,14 +75,14 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
         BlocProvider(
           create: (context) => LibraryBloc(
             contentSearchService: ContentSearchService(),
-          )..add(const SearchContent(type: 'movie')),
+          )..add(SearchContent(type: _selectedType.name)),
         ),
         BlocProvider(
           create: (context) => FavoritesBloc(
             favoritesService: FavoritesService(),
           ),
         ),
-        if (_userType == UserType.PATIENT)
+        if (_isPatient)
           BlocProvider(
             create: (context) => AssignmentsBloc(
               assignmentsService: AssignmentsService(),
@@ -87,139 +90,141 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
           ),
       ],
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Biblioteca'),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: [
-              const Tab(text: 'Explorar', icon: Icon(Icons.explore)),
-              const Tab(text: 'Favoritos', icon: Icon(Icons.favorite)),
-              if (_userType == UserType.PATIENT)
-                const Tab(text: 'Asignado', icon: Icon(Icons.assignment)),
-            ],
-          ),
+        backgroundColor: black,
+        appBar: LibraryTopBar(
+          isPsychologist: _userType == UserType.PSYCHOLOGIST,
+          isSelectionMode: false,
+          onCancelSelection: () {},
         ),
-        body: TabBarView(
-          controller: _tabController,
+        body: Column(
           children: [
-            _buildExploreTab(),
-            const FavoritesTab(),
-            if (_userType == UserType.PATIENT) const AssignmentsTab(),
+            LibraryTabs(
+              isPatient: _isPatient,
+              currentTab: _currentTab,
+              onTabChange: (tab) {
+                setState(() {
+                  _currentTab = tab;
+                });
+              },
+              selectedType: _selectedType,
+              availableTabs: _availableTabs,
+              onContentTypeSelected: (type) {
+                setState(() {
+                  _selectedType = type;
+                });
+                context.read<LibraryBloc>().add(SearchContent(type: type.name));
+              },
+            ),
+            if (_currentTab == 'content' &&
+                (_selectedType == ContentType.movie || _selectedType == ContentType.music))
+              SearchBarWithFilter(
+                searchQuery: _searchQuery,
+                onSearchQueryChange: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                },
+                onFilterClick: () {},
+              ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _currentTab == 'assignments'
+                  ? const AssignmentsTab()
+                  : _buildContentGrid(),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildExploreTab() {
-    return Column(
-      children: [
-        BlocBuilder<LibraryBloc, LibraryState>(
-          builder: (context, state) {
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    _buildTypeChip(context, 'movie', 'Películas', state.selectedType),
-                    const SizedBox(width: 8),
-                    _buildTypeChip(context, 'music', 'Música', state.selectedType),
-                    const SizedBox(width: 8),
-                    _buildTypeChip(context, 'video', 'Videos', state.selectedType),
-                    const SizedBox(width: 16),
-                  ],
-                ),
-              ),
+  Widget _buildContentGrid() {
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, state) {
+        switch (state.status) {
+          case Status.loading:
+            return const Center(
+              child: CircularProgressIndicator(color: green49),
             );
-          },
-        ),
-        Expanded(
-          child: BlocBuilder<LibraryBloc, LibraryState>(
-            builder: (context, state) {
-              switch (state.status) {
-                case Status.loading:
-                  return const Center(child: CircularProgressIndicator());
 
-                case Status.failure:
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(state.message ?? 'Error al cargar contenido'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<LibraryBloc>().add(
-                                  SearchContent(type: state.selectedType),
-                                );
-                          },
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  );
-
-                case Status.success:
-                  if (state.contents.isEmpty) {
-                    return const Center(
-                      child: Text('No se encontró contenido'),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
+          case Status.failure:
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message ?? 'Error al cargar contenido',
+                    style: const TextStyle(color: white),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
                       context.read<LibraryBloc>().add(
-                            SearchContent(type: state.selectedType),
+                            SearchContent(type: _selectedType.name),
                           );
                     },
-                    child: ListView.builder(
-                      itemCount: state.contents.length,
-                      itemBuilder: (context, index) {
-                        final contentUi = state.contents[index];
-                        return ContentCard(
-                          contentUi: contentUi,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ContentDetailPage(
-                                  content: contentUi.content,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            );
+
+          case Status.success:
+            if (state.contents.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No se encontró contenido',
+                  style: TextStyle(color: gray828, fontSize: 16),
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<LibraryBloc>().add(
+                      SearchContent(type: _selectedType.name),
+                    );
+              },
+              child: GridView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.6,
+                ),
+                itemCount: state.contents.length,
+                itemBuilder: (context, index) {
+                  final contentUi = state.contents[index];
+                  return ContentCard(
+                    contentUi: contentUi,
+                    isSelected: false,
+                    isSelectionMode: false,
+                    onFavoriteClick: () {
+                      context.read<LibraryBloc>().add(
+                            ToggleFavorite(content: contentUi.content),
+                          );
+                    },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ContentDetailPage(
+                            content: contentUi.content,
+                          ),
+                        ),
+                      );
+                    },
+                    onLongPress: () {},
                   );
+                },
+              ),
+            );
 
-                default:
-                  return const SizedBox.shrink();
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeChip(
-    BuildContext context,
-    String type,
-    String label,
-    String selectedType,
-  ) {
-    final isSelected = type == selectedType;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) {
-          context.read<LibraryBloc>().add(SearchContent(type: type));
+          default:
+            return const SizedBox.shrink();
         }
       },
     );
