@@ -10,7 +10,7 @@ enum ContentType {
   String get displayName {
     switch (this) {
       case ContentType.movie:
-        return 'Películas/series';
+        return 'Películas';
       case ContentType.music:
         return 'Música';
       case ContentType.video:
