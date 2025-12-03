@@ -92,7 +92,7 @@ class _FavoritesTabState extends State<FavoritesTab> {
                     isSelectionMode: false,
                     onFavoriteClick: () {
                       context.read<FavoritesBloc>().add(
-                            ToggleFavorite(content: content),
+                            RemoveFavorite(favoriteId: content.externalId),
                           );
                     },
                     onTap: () {

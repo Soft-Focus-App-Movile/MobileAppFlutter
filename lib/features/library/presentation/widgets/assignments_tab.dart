@@ -9,7 +9,7 @@ import '../blocs/assignments/assignments_bloc.dart';
 import '../blocs/assignments/assignments_event.dart';
 import '../blocs/assignments/assignments_state.dart';
 import '../../domain/models/assignment.dart';
-import 'content_detail_page.dart';
+import '../pages/content_detail_page.dart';
 
 class AssignmentsTab extends StatefulWidget {
   const AssignmentsTab({super.key});
@@ -276,7 +276,9 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: green65,
                                 foregroundColor: greenF2,
-                                shape: RoundedCornerShape(8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 minimumSize: const Size(0, 36),
                               ),
@@ -303,7 +305,9 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF2D2D2D),
                                   foregroundColor: greenF2,
-                                  shape: RoundedCornerShape(8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
                                   minimumSize: const Size(0, 36),
