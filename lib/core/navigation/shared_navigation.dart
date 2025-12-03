@@ -9,6 +9,7 @@ import '../../features/home/presentation/blocs/home/home_event.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profiles/presentation/pages/shared/privacy_policy_page.dart';
 import '../../features/profiles/presentation/pages/shared/help_support_page.dart';
+import '../../features/library/presentation/pages/library_page.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../features/auth/domain/models/user_type.dart';
 import '../../core/ui/components/navigation/general_scaffold.dart';
@@ -143,13 +144,7 @@ List<RouteBase> sharedRoutes() {
       path: AppRoute.library.path,
       name: 'library',
       builder: (context, state) {
-        // TODO: Library team will implement LibraryPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Biblioteca')),
-          body: const Center(
-            child: Text('TODO: Library team - Implementar LibraryPage'),
-          ),
-        );
+        return const LibraryPage();
       },
     ),
 
