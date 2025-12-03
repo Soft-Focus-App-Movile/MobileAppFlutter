@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/ui/colors.dart';
+import '../../../../core/ui/text_styles.dart';
 import '../../domain/models/content.dart';
 import '../blocs/content_detail/content_detail_bloc.dart';
 import '../blocs/content_detail/content_detail_event.dart';
 import '../blocs/content_detail/content_detail_state.dart';
+import '../../data/services/assignments_service.dart';
 
 class ContentDetailPage extends StatelessWidget {
   final Content content;
@@ -15,49 +19,65 @@ class ContentDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => ContentDetailBloc(
-        assignmentsService: context.read(),
+        assignmentsService: AssignmentsService(),
       )..add(LoadContentDetail(content: content)),
       child: Scaffold(
+        backgroundColor: black,
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
               expandedHeight: 300,
               pinned: true,
+              backgroundColor: black,
+              iconTheme: const IconThemeData(color: white),
               flexibleSpace: FlexibleSpaceBar(
                 background: content.displayImage.isNotEmpty
-                    ? Image.network(
-                        content.displayImage,
+                    ? CachedNetworkImage(
+                        imageUrl: content.displayImage,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
+                        placeholder: (context, url) => Container(
+                          color: gray2C,
+                          child: const Center(
+                            child: CircularProgressIndicator(color: green49),
+                          ),
+                        ),
+                        errorWidget: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.image_not_supported, size: 80),
+                            color: gray2C,
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              size: 80,
+                              color: gray808,
+                            ),
                           );
                         },
                       )
                     : Container(
-                        color: Colors.grey[300],
-                        child: Icon(
-                          _getIconForType(content.type),
+                        color: gray2C,
+                        child: const Icon(
+                          Icons.movie,
                           size: 80,
-                          color: Colors.grey[600],
+                          color: gray808,
                         ),
                       ),
               ),
               actions: [
                 BlocBuilder<ContentDetailBloc, ContentDetailState>(
                   builder: (context, state) {
-                    return IconButton(
-                      icon: Icon(
-                        state.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: state.isFavorite ? Colors.red : Colors.white,
-                      ),
-                      onPressed: () {
-                        context.read<ContentDetailBloc>().add(
-                              const ToggleContentFavorite(),
-                            );
-                      },
-                    );
+                    if (content.isMovie || content.isMusic) {
+                      return IconButton(
+                        icon: Icon(
+                          state.isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: state.isFavorite ? Colors.red : white,
+                        ),
+                        onPressed: () {
+                          context.read<ContentDetailBloc>().add(
+                                const ToggleContentFavorite(),
+                              );
+                        },
+                      );
+                    }
+                    return const SizedBox.shrink();
                   },
                 ),
               ],
@@ -70,37 +90,49 @@ class ContentDetailPage extends StatelessWidget {
                   children: [
                     Text(
                       content.title,
-                      style: const TextStyle(
+                      style: crimsonSemiBold.copyWith(
                         fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        color: white,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    if (content.displaySubtitle.isNotEmpty)
+                    if (content.displaySubtitle.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Text(
                         content.displaySubtitle,
-                        style: TextStyle(
+                        style: sourceSansRegular.copyWith(
                           fontSize: 16,
-                          color: Colors.grey[600],
+                          color: gray828,
                         ),
                       ),
+                    ],
                     const SizedBox(height: 16),
-                    if (content.rating != null || content.duration != null)
-                      Row(
-                        children: [
-                          if (content.rating != null) ...[
-                            const Icon(Icons.star, color: Colors.amber, size: 20),
-                            const SizedBox(width: 4),
-                            Text(content.rating!, style: const TextStyle(fontSize: 16)),
-                            const SizedBox(width: 16),
-                          ],
-                          if (content.duration != null) ...[
-                            const Icon(Icons.access_time, size: 20),
-                            const SizedBox(width: 4),
-                            Text(content.duration!, style: const TextStyle(fontSize: 16)),
-                          ],
+                    Row(
+                      children: [
+                        if (content.rating != null) ...[
+                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            content.rating!,
+                            style: sourceSansRegular.copyWith(
+                              fontSize: 16,
+                              color: white,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                         ],
-                      ),
+                        if (content.duration != null) ...[
+                          const Icon(Icons.access_time, size: 20, color: white),
+                          const SizedBox(width: 4),
+                          Text(
+                            content.duration!,
+                            style: sourceSansRegular.copyWith(
+                              fontSize: 16,
+                              color: white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     if (content.genres != null && content.genres!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Wrap(
@@ -109,33 +141,39 @@ class ContentDetailPage extends StatelessWidget {
                         children: content.genres!.map((genre) {
                           return Chip(
                             label: Text(genre),
-                            backgroundColor: Colors.grey[200],
+                            backgroundColor: gray2C,
+                            labelStyle: sourceSansRegular.copyWith(color: white),
                           );
                         }).toList(),
                       ),
                     ],
                     if (content.overview != null) ...[
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Descripción',
-                        style: TextStyle(
+                        style: crimsonSemiBold.copyWith(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          color: green49,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         content.overview!,
-                        style: const TextStyle(fontSize: 15, height: 1.5),
+                        style: sourceSansRegular.copyWith(
+                          fontSize: 15,
+                          color: white,
+                          height: 1.5,
+                        ),
                       ),
                     ],
-                    if (content.emotionalTags != null && content.emotionalTags!.isNotEmpty) ...[
+                    if (content.emotionalTags != null &&
+                        content.emotionalTags!.isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Etiquetas emocionales',
-                        style: TextStyle(
+                        style: crimsonSemiBold.copyWith(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          color: green49,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -145,7 +183,8 @@ class ContentDetailPage extends StatelessWidget {
                         children: content.emotionalTags!.map((tag) {
                           return Chip(
                             label: Text(tag),
-                            backgroundColor: Colors.blue[100],
+                            backgroundColor: yellowCB9D,
+                            labelStyle: sourceSansRegular.copyWith(color: white),
                           );
                         }).toList(),
                       ),
@@ -159,6 +198,8 @@ class ContentDetailPage extends StatelessWidget {
                           icon: const Icon(Icons.open_in_new),
                           label: Text(_getButtonLabel(content.type)),
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: green49,
+                            foregroundColor: white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
@@ -172,6 +213,8 @@ class ContentDetailPage extends StatelessWidget {
                           icon: const Icon(Icons.play_circle_outline),
                           label: const Text('Ver tráiler'),
                           style: OutlinedButton.styleFrom(
+                            foregroundColor: green49,
+                            side: const BorderSide(color: green49),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
@@ -185,19 +228,6 @@ class ContentDetailPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getIconForType(String type) {
-    switch (type.toLowerCase()) {
-      case 'movie':
-        return Icons.movie;
-      case 'music':
-        return Icons.music_note;
-      case 'video':
-        return Icons.videocam;
-      default:
-        return Icons.description;
-    }
   }
 
   String _getButtonLabel(String type) {
