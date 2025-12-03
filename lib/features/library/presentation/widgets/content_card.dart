@@ -1,158 +1,151 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/ui/colors.dart';
+import '../../../../core/ui/text_styles.dart';
 import '../../domain/models/content_ui.dart';
-import '../blocs/library/library_bloc.dart';
-import '../blocs/library/library_event.dart';
 
 class ContentCard extends StatelessWidget {
   final ContentUi contentUi;
+  final bool isSelected;
+  final bool isSelectionMode;
+  final VoidCallback onFavoriteClick;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const ContentCard({
     super.key,
     required this.contentUi,
+    this.isSelected = false,
+    this.isSelectionMode = false,
+    required this.onFavoriteClick,
     required this.onTap,
+    required this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     final content = contentUi.content;
+    final canFavorite = content.isMovie || content.isMusic;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: SizedBox(
+        width: 160,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
-                if (content.displayImage.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                    child: Image.network(
-                      content.displayImage,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image_not_supported, size: 50),
-                        );
-                      },
-                    ),
-                  )
-                else
-                  Container(
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: content.displayImage,
+                    width: 160,
                     height: 180,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 160,
+                      height: 180,
+                      color: gray2C,
+                      child: const Center(
+                        child: CircularProgressIndicator(color: green49),
                       ),
                     ),
-                    child: Center(
+                    errorWidget: (context, url, error) => Container(
+                      width: 160,
+                      height: 180,
+                      color: gray2C,
                       child: Icon(
                         _getIconForType(content.type),
-                        size: 60,
-                        color: Colors.grey[600],
+                        size: 50,
+                        color: gray808,
                       ),
-                    ),
-                  ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: IconButton(
-                      icon: Icon(
-                        contentUi.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: contentUi.isFavorite ? Colors.red : Colors.grey,
-                      ),
-                      onPressed: () {
-                        context.read<LibraryBloc>().add(
-                              ToggleFavorite(content: content),
-                            );
-                      },
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                if (isSelectionMode && isSelected)
+                  Container(
+                    width: 160,
+                    height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: green49.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      _getTypeLabel(content.type),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                    child: const Center(
+                      child: Icon(
+                        Icons.check_circle,
+                        color: green49,
+                        size: 48,
                       ),
                     ),
                   ),
-                ),
+                if (!isSelectionMode && canFavorite)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        iconSize: 20,
+                        onPressed: onFavoriteClick,
+                        icon: Icon(
+                          Icons.favorite,
+                          color: contentUi.isFavorite ? Colors.red : white,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    content.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+            const SizedBox(height: 12),
+            Text(
+              content.title,
+              style: sourceSansRegular.copyWith(
+                fontSize: 14,
+                color: white,
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (content.duration != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Duración  ${content.duration}',
+                style: sourceSansLight.copyWith(
+                  fontSize: 12,
+                  color: white.withOpacity(0.7),
+                ),
+              ),
+            ],
+            if (content.emotionalTags != null && content.emotionalTags!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                children: content.emotionalTags!.take(1).map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: yellowCB9D,
+                      borderRadius: BorderRadius.circular(13),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (content.displaySubtitle.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      content.displaySubtitle,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
+                    child: Text(
+                      tag,
+                      style: sourceSansRegular.copyWith(
+                        fontSize: 11,
+                        color: white,
                       ),
                     ),
-                  ],
-                  if (content.overview != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      content.overview!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ],
-                  if (content.rating != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          content.rating!,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+                  );
+                }).toList(),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -169,19 +162,6 @@ class ContentCard extends StatelessWidget {
         return Icons.videocam;
       default:
         return Icons.description;
-    }
-  }
-
-  String _getTypeLabel(String type) {
-    switch (type.toLowerCase()) {
-      case 'movie':
-        return 'Película';
-      case 'music':
-        return 'Música';
-      case 'video':
-        return 'Video';
-      default:
-        return type;
     }
   }
 }
