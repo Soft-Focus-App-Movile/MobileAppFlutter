@@ -33,11 +33,10 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
 
     try {
       final request = ContentSearchRequestDto(
-        type: event.type,
-        query: event.query,
-        emotion: event.emotion,
-        page: event.page,
-        pageSize: 20,
+        query: event.query ?? '',
+        contentType: event.type,
+        emotionFilter: event.emotion,
+        limit: 20,
       );
 
       final response = await _contentSearchService.searchContent(request);
@@ -51,12 +50,10 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
 
       emit(state.copyWith(
         status: Status.success,
-        contents: event.page == 1
-            ? contentList
-            : [...state.contents, ...contentList],
+        contents: contentList,
         currentPage: response.page,
-        totalPages: response.totalPages,
-        hasMorePages: response.page < response.totalPages,
+        totalPages: 1,
+        hasMorePages: false,
       ));
     } catch (e) {
       emit(state.copyWith(

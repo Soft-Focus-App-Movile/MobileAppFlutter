@@ -28,7 +28,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     try {
       final response = await _favoritesService.getFavorites();
       final favorites =
-          response.results.map((dto) => ContentMapper.fromDto(dto)).toList();
+          response.content.map((dto) => ContentMapper.fromDto(dto)).toList();
 
       emit(state.copyWith(
         status: Status.success,

@@ -65,7 +65,7 @@ class AssignmentsBloc extends Bloc<AssignmentsEvent, AssignmentsState> {
           );
         }
         return assignment;
-      }).toList();
+      }).toList() as List<Assignment>;
 
       emit(state.copyWith(
         assignments: updatedAssignments,

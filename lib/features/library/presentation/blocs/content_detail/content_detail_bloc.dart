@@ -47,7 +47,7 @@ class ContentDetailBloc extends Bloc<ContentDetailEvent, ContentDetailState> {
       }
 
       final request = AssignmentRequestDto(
-        patientId: event.patientId,
+        patientIds: [event.patientId],
         contentId: state.content!.externalId,
         contentType: state.content!.type,
         notes: event.notes,
