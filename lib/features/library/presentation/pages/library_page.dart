@@ -89,51 +89,55 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
           ),
       ],
-      child: Scaffold(
-        backgroundColor: black,
-        appBar: LibraryTopBar(
-          isPsychologist: _userType == UserType.PSYCHOLOGIST,
-          isSelectionMode: false,
-          onCancelSelection: () {},
-        ),
-        body: Column(
-          children: [
-            LibraryTabs(
-              isPatient: _isPatient,
-              currentTab: _currentTab,
-              onTabChange: (tab) {
-                setState(() {
-                  _currentTab = tab;
-                });
-              },
-              selectedType: _selectedType,
-              availableTabs: _availableTabs,
-              onContentTypeSelected: (type) {
-                setState(() {
-                  _selectedType = type;
-                });
-                context.read<LibraryBloc>().add(SearchContent(type: type.name));
-              },
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: black,
+            appBar: LibraryTopBar(
+              isPsychologist: _userType == UserType.PSYCHOLOGIST,
+              isSelectionMode: false,
+              onCancelSelection: () {},
             ),
-            if (_currentTab == 'content' &&
-                (_selectedType == ContentType.movie || _selectedType == ContentType.music))
-              SearchBarWithFilter(
-                searchQuery: _searchQuery,
-                onSearchQueryChange: (query) {
-                  setState(() {
-                    _searchQuery = query;
-                  });
-                },
-                onFilterClick: () {},
-              ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: _currentTab == 'assignments'
-                  ? const AssignmentsTab()
-                  : _buildContentGrid(),
+            body: Column(
+              children: [
+                LibraryTabs(
+                  isPatient: _isPatient,
+                  currentTab: _currentTab,
+                  onTabChange: (tab) {
+                    setState(() {
+                      _currentTab = tab;
+                    });
+                  },
+                  selectedType: _selectedType,
+                  availableTabs: _availableTabs,
+                  onContentTypeSelected: (type) {
+                    setState(() {
+                      _selectedType = type;
+                    });
+                    context.read<LibraryBloc>().add(SearchContent(type: type.name));
+                  },
+                ),
+                if (_currentTab == 'content' &&
+                    (_selectedType == ContentType.movie || _selectedType == ContentType.music))
+                  SearchBarWithFilter(
+                    searchQuery: _searchQuery,
+                    onSearchQueryChange: (query) {
+                      setState(() {
+                        _searchQuery = query;
+                      });
+                    },
+                    onFilterClick: () {},
+                  ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _currentTab == 'assignments'
+                      ? const AssignmentsTab()
+                      : _buildContentGrid(),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
