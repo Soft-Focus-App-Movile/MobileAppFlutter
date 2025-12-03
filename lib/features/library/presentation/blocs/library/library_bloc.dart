@@ -33,7 +33,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
 
     try {
       final request = ContentSearchRequestDto(
-        query: event.query ?? '',
+        query: event.query != null && event.query!.isNotEmpty ? event.query! : '*',
         contentType: event.type,
         emotionFilter: event.emotion,
         limit: 20,
