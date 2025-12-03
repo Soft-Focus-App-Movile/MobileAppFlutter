@@ -214,7 +214,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                                     ),
                                   ),
                                   Text(
-                                    '${content.duration} min',
+                                    content.formattedDuration!,
                                     style: sourceSansRegular.copyWith(
                                       fontSize: 12,
                                       color: gray828,

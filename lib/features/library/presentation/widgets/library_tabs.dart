@@ -51,10 +51,6 @@ class LibraryTabs extends StatelessWidget {
   }
 
   Widget _buildPatientTabs() {
-    final selectedTabIndex = currentTab == 'assignments'
-        ? 0
-        : availableTabs.indexOf(selectedType) + 1;
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),

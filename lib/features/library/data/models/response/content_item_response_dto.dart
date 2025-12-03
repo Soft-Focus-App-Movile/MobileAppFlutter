@@ -2,7 +2,21 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'content_item_response_dto.g.dart';
 
-/// DTO para respuesta de contenido multimedia del backend
+class _StringOrNumberConverter implements JsonConverter<String?, Object?> {
+  const _StringOrNumberConverter();
+
+  @override
+  String? fromJson(Object? json) {
+    if (json == null) return null;
+    if (json is String) return json;
+    if (json is num) return json.toString();
+    return json.toString();
+  }
+
+  @override
+  Object? toJson(String? object) => object;
+}
+
 @JsonSerializable()
 class ContentItemResponseDto {
   @JsonKey(name: 'id')
@@ -16,8 +30,13 @@ class ContentItemResponseDto {
   final String? overview;
   final String? posterUrl;
   final String? backdropUrl;
-  final double? rating;
-  final int? duration;
+
+  @_StringOrNumberConverter()
+  final String? rating;
+
+  @_StringOrNumberConverter()
+  final String? duration;
+
   final String? releaseDate;
   final List<String>? genres;
   final String? trailerUrl;

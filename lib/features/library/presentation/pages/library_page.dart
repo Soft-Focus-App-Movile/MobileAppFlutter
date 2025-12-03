@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/common/status.dart';
+import '../../../../core/networking/http_client.dart';
 import '../../../auth/data/local/user_session.dart';
 import '../../../auth/domain/models/user_type.dart';
 import '../../data/services/content_search_service.dart';
+import '../../data/services/recommendations_service.dart';
 import '../../data/services/favorites_service.dart';
 import '../../data/services/assignments_service.dart';
 import '../blocs/library/library_bloc.dart';
@@ -15,8 +17,8 @@ import '../blocs/assignments/assignments_bloc.dart';
 import '../widgets/library_top_bar.dart';
 import '../widgets/library_tabs.dart';
 import '../widgets/search_bar_with_filter.dart';
+import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/content_card.dart';
-import '../widgets/favorites_tab.dart';
 import '../widgets/assignments_tab.dart';
 import 'content_detail_page.dart';
 
@@ -33,6 +35,7 @@ class _LibraryPageState extends State<LibraryPage> {
   String _currentTab = 'content';
   ContentType _selectedType = ContentType.movie;
   String _searchQuery = '';
+  HttpClient? _httpClient;
 
   @override
   void initState() {
@@ -45,6 +48,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final user = await userSession.getUser();
     setState(() {
       _userType = user?.userType ?? UserType.GENERAL;
+      _httpClient = HttpClient(token: user?.token);
       _isLoading = false;
       if (_userType == UserType.PATIENT) {
         _currentTab = 'assignments';
@@ -74,18 +78,19 @@ class _LibraryPageState extends State<LibraryPage> {
       providers: [
         BlocProvider(
           create: (context) => LibraryBloc(
-            contentSearchService: ContentSearchService(),
+            contentSearchService: ContentSearchService(httpClient: _httpClient),
+            recommendationsService: RecommendationsService(httpClient: _httpClient),
           )..add(SearchContent(type: _selectedType.name)),
         ),
         BlocProvider(
           create: (context) => FavoritesBloc(
-            favoritesService: FavoritesService(),
+            favoritesService: FavoritesService(httpClient: _httpClient),
           ),
         ),
         if (_isPatient)
           BlocProvider(
             create: (context) => AssignmentsBloc(
-              assignmentsService: AssignmentsService(),
+              assignmentsService: AssignmentsService(httpClient: _httpClient),
             ),
           ),
       ],
@@ -125,8 +130,40 @@ class _LibraryPageState extends State<LibraryPage> {
                       setState(() {
                         _searchQuery = query;
                       });
+                      if (query.isEmpty) {
+                        context.read<LibraryBloc>().add(
+                              SearchContent(type: _selectedType.name),
+                            );
+                      } else {
+                        context.read<LibraryBloc>().add(
+                              SearchContent(type: _selectedType.name, query: query),
+                            );
+                      }
                     },
-                    onFilterClick: () {},
+                    onFilterClick: () {
+                      final libraryBloc = context.read<LibraryBloc>();
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => FilterBottomSheet(
+                          selectedEmotion: libraryBloc.state.selectedEmotion,
+                          onEmotionSelected: (emotion) {
+                            libraryBloc.add(
+                              SearchContent(
+                                type: _selectedType.name,
+                                emotion: emotion,
+                                query: _searchQuery.isNotEmpty ? _searchQuery : null,
+                              ),
+                            );
+                          },
+                          onClearFilters: () {
+                            libraryBloc.add(
+                              SearchContent(type: _selectedType.name),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 const SizedBox(height: 16),
                 Expanded(

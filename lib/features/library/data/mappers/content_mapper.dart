@@ -4,6 +4,18 @@ import '../models/response/content_item_response_dto.dart';
 import '../models/response/assignment_response_dto.dart';
 
 class ContentMapper {
+  /// Parsea la duración desde el formato del backend
+  /// Ejemplos: "148min" -> 148, "2 temporadas" -> 2
+  static int? _parseDuration(String? durationString) {
+    if (durationString == null || durationString.isEmpty) return null;
+
+    // Extraer el primer número de la cadena
+    final numberMatch = RegExp(r'\d+').firstMatch(durationString);
+    if (numberMatch == null) return null;
+
+    return int.tryParse(numberMatch.group(0)!);
+  }
+
   static Content fromDto(ContentItemResponseDto dto) {
     return Content(
       externalId: dto.externalId,
@@ -13,8 +25,8 @@ class ContentMapper {
       overview: dto.overview,
       posterUrl: dto.posterUrl,
       backdropUrl: dto.backdropUrl,
-      rating: dto.rating?.toString(),
-      duration: dto.duration?.toString(),
+      rating: dto.rating != null ? double.tryParse(dto.rating!) : null,
+      duration: _parseDuration(dto.duration),
       releaseDate: dto.releaseDate,
       genres: dto.genres,
       trailerUrl: dto.trailerUrl,

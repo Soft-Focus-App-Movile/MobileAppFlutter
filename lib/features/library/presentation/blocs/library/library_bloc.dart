@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/common/status.dart';
 import '../../../data/services/content_search_service.dart';
+import '../../../data/services/recommendations_service.dart';
 import '../../../data/models/request/content_search_request_dto.dart';
 import '../../../data/mappers/content_mapper.dart';
 import '../../../domain/models/content_ui.dart';
@@ -10,10 +11,13 @@ import 'library_state.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   final ContentSearchService _contentSearchService;
+  final RecommendationsService _recommendationsService;
 
   LibraryBloc({
     required ContentSearchService contentSearchService,
+    required RecommendationsService recommendationsService,
   })  : _contentSearchService = contentSearchService,
+        _recommendationsService = recommendationsService,
         super(const LibraryState()) {
     on<SearchContent>(_onSearchContent);
     on<ToggleFavorite>(_onToggleFavorite);
@@ -28,30 +32,63 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
       emit(state.copyWith(
         status: Status.loading,
         selectedType: event.type,
+        selectedEmotion: event.emotion,
       ));
     }
 
     try {
-      final request = ContentSearchRequestDto(
-        query: event.query != null && event.query!.isNotEmpty ? event.query! : '*',
-        contentType: event.type,
-        emotionFilter: event.emotion,
-        limit: 20,
-      );
+      final hasQuery = event.query != null && event.query!.isNotEmpty;
+      final hasEmotion = event.emotion != null && event.emotion!.isNotEmpty;
 
-      final response = await _contentSearchService.searchContent(request);
+      final contentList = <ContentUi>[];
 
-      final contentList = response.results
-          .map((dto) => ContentUi(
-                content: ContentMapper.fromDto(dto),
-                isFavorite: false,
-              ))
-          .toList();
+      if (hasQuery) {
+        final request = ContentSearchRequestDto(
+          query: event.query!,
+          contentType: event.type,
+          emotionFilter: event.emotion,
+          limit: 20,
+        );
+
+        final response = await _contentSearchService.searchContent(request);
+
+        contentList.addAll(response.results
+            .map((dto) => ContentUi(
+                  content: ContentMapper.fromDto(dto),
+                  isFavorite: false,
+                ))
+            .toList());
+      } else if (hasEmotion) {
+        final response = await _recommendationsService.getRecommendedByEmotion(
+          emotion: event.emotion!,
+          contentType: event.type,
+          limit: 20,
+        );
+
+        contentList.addAll(response.content
+            .map((dto) => ContentUi(
+                  content: ContentMapper.fromDto(dto),
+                  isFavorite: false,
+                ))
+            .toList());
+      } else {
+        final response = await _recommendationsService.getRecommendedContent(
+          contentType: event.type,
+          limit: 20,
+        );
+
+        contentList.addAll(response.content
+            .map((dto) => ContentUi(
+                  content: ContentMapper.fromDto(dto),
+                  isFavorite: false,
+                ))
+            .toList());
+      }
 
       emit(state.copyWith(
         status: Status.success,
         contents: contentList,
-        currentPage: response.page,
+        currentPage: 1,
         totalPages: 1,
         hasMorePages: false,
       ));

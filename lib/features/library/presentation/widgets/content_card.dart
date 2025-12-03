@@ -117,7 +117,7 @@ class ContentCard extends StatelessWidget {
             if (content.duration != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Duración  ${content.duration}',
+                'Duración  ${content.formattedDuration}',
                 style: sourceSansLight.copyWith(
                   fontSize: 12,
                   color: white.withOpacity(0.7),

@@ -4,23 +4,55 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
+import '../../../../core/networking/http_client.dart';
+import '../../../auth/data/local/user_session.dart';
 import '../../domain/models/content.dart';
 import '../blocs/content_detail/content_detail_bloc.dart';
 import '../blocs/content_detail/content_detail_event.dart';
 import '../blocs/content_detail/content_detail_state.dart';
 import '../../data/services/assignments_service.dart';
 
-class ContentDetailPage extends StatelessWidget {
+class ContentDetailPage extends StatefulWidget {
   final Content content;
 
   const ContentDetailPage({super.key, required this.content});
 
   @override
+  State<ContentDetailPage> createState() => _ContentDetailPageState();
+}
+
+class _ContentDetailPageState extends State<ContentDetailPage> {
+  HttpClient? _httpClient;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeHttpClient();
+  }
+
+  Future<void> _initializeHttpClient() async {
+    final userSession = UserSession();
+    final user = await userSession.getUser();
+    setState(() {
+      _httpClient = HttpClient(token: user?.token);
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: black,
+        body: Center(child: CircularProgressIndicator(color: green49)),
+      );
+    }
+
     return BlocProvider(
       create: (context) => ContentDetailBloc(
-        assignmentsService: AssignmentsService(),
-      )..add(LoadContentDetail(content: content)),
+        assignmentsService: AssignmentsService(httpClient: _httpClient),
+      )..add(LoadContentDetail(content: widget.content)),
       child: Scaffold(
         backgroundColor: black,
         body: CustomScrollView(
@@ -31,9 +63,9 @@ class ContentDetailPage extends StatelessWidget {
               backgroundColor: black,
               iconTheme: const IconThemeData(color: white),
               flexibleSpace: FlexibleSpaceBar(
-                background: content.displayImage.isNotEmpty
+                background: widget.content.displayImage.isNotEmpty
                     ? CachedNetworkImage(
-                        imageUrl: content.displayImage,
+                        imageUrl: widget.content.displayImage,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           color: gray2C,
@@ -64,7 +96,7 @@ class ContentDetailPage extends StatelessWidget {
               actions: [
                 BlocBuilder<ContentDetailBloc, ContentDetailState>(
                   builder: (context, state) {
-                    if (content.isMovie || content.isMusic) {
+                    if (widget.content.isMovie || widget.content.isMusic) {
                       return IconButton(
                         icon: Icon(
                           state.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -89,16 +121,16 @@ class ContentDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      content.title,
+                      widget.content.title,
                       style: crimsonSemiBold.copyWith(
                         fontSize: 24,
                         color: white,
                       ),
                     ),
-                    if (content.displaySubtitle.isNotEmpty) ...[
+                    if (widget.content.displaySubtitle.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
-                        content.displaySubtitle,
+                        widget.content.displaySubtitle,
                         style: sourceSansRegular.copyWith(
                           fontSize: 16,
                           color: gray828,
@@ -108,11 +140,11 @@ class ContentDetailPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        if (content.rating != null) ...[
+                        if (widget.content.rating != null) ...[
                           const Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
                           Text(
-                            content.rating!,
+                            widget.content.formattedRating!,
                             style: sourceSansRegular.copyWith(
                               fontSize: 16,
                               color: white,
@@ -120,11 +152,11 @@ class ContentDetailPage extends StatelessWidget {
                           ),
                           const SizedBox(width: 16),
                         ],
-                        if (content.duration != null) ...[
+                        if (widget.content.duration != null) ...[
                           const Icon(Icons.access_time, size: 20, color: white),
                           const SizedBox(width: 4),
                           Text(
-                            content.duration!,
+                            widget.content.formattedDuration!,
                             style: sourceSansRegular.copyWith(
                               fontSize: 16,
                               color: white,
@@ -133,12 +165,12 @@ class ContentDetailPage extends StatelessWidget {
                         ],
                       ],
                     ),
-                    if (content.genres != null && content.genres!.isNotEmpty) ...[
+                    if (widget.content.genres != null && widget.content.genres!.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: content.genres!.map((genre) {
+                        children: widget.content.genres!.map((genre) {
                           return Chip(
                             label: Text(genre),
                             backgroundColor: gray2C,
@@ -147,7 +179,7 @@ class ContentDetailPage extends StatelessWidget {
                         }).toList(),
                       ),
                     ],
-                    if (content.overview != null) ...[
+                    if (widget.content.overview != null) ...[
                       const SizedBox(height: 24),
                       Text(
                         'Descripción',
@@ -158,7 +190,7 @@ class ContentDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        content.overview!,
+                        widget.content.overview!,
                         style: sourceSansRegular.copyWith(
                           fontSize: 15,
                           color: white,
@@ -166,8 +198,8 @@ class ContentDetailPage extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (content.emotionalTags != null &&
-                        content.emotionalTags!.isNotEmpty) ...[
+                    if (widget.content.emotionalTags != null &&
+                        widget.content.emotionalTags!.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Text(
                         'Etiquetas emocionales',
@@ -180,7 +212,7 @@ class ContentDetailPage extends StatelessWidget {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: content.emotionalTags!.map((tag) {
+                        children: widget.content.emotionalTags!.map((tag) {
                           return Chip(
                             label: Text(tag),
                             backgroundColor: yellowCB9D,
@@ -190,13 +222,13 @@ class ContentDetailPage extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 24),
-                    if (content.externalUrl != null)
+                    if (widget.content.externalUrl != null)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _launchUrl(content.externalUrl!),
+                          onPressed: () => _launchUrl(widget.content.externalUrl!),
                           icon: const Icon(Icons.open_in_new),
-                          label: Text(_getButtonLabel(content.type)),
+                          label: Text(_getButtonLabel(widget.content.type)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: green49,
                             foregroundColor: white,
@@ -204,12 +236,12 @@ class ContentDetailPage extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (content.trailerUrl != null) ...[
+                    if (widget.content.trailerUrl != null) ...[
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: () => _launchUrl(content.trailerUrl!),
+                          onPressed: () => _launchUrl(widget.content.trailerUrl!),
                           icon: const Icon(Icons.play_circle_outline),
                           label: const Text('Ver tráiler'),
                           style: OutlinedButton.styleFrom(

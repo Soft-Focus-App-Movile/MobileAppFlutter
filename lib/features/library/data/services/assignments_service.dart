@@ -1,35 +1,27 @@
 import 'dart:convert';
 import '../../../../core/networking/http_client.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../auth/data/local/user_session.dart';
 import '../models/request/assignment_request_dto.dart';
 import '../models/response/assignments_response_dto.dart';
 import '../models/response/assignment_completed_response_dto.dart';
 import '../models/response/assignment_created_response_dto.dart';
 
 class AssignmentsService {
-  final UserSession _userSession = UserSession();
+  final HttpClient _httpClient;
 
-  Future<HttpClient> _getAuthenticatedClient() async {
-    final user = await _userSession.getUser();
-    return HttpClient(token: user?.token);
-  }
-
-  // ============================================================
-  // ENDPOINTS FOR PATIENTS
-  // ============================================================
+  AssignmentsService({HttpClient? httpClient})
+      : _httpClient = httpClient ?? HttpClient();
 
   Future<AssignmentsResponseDto> getAssignedContent({
     bool? completed,
   }) async {
-    final httpClient = await _getAuthenticatedClient();
     final queryParameters = <String, dynamic>{};
 
     if (completed != null) {
       queryParameters['completed'] = completed.toString();
     }
 
-    final response = await httpClient.get(
+    final response = await _httpClient.get(
       LibraryEndpoints.assignedContent,
       queryParameters: queryParameters,
     );
@@ -44,8 +36,7 @@ class AssignmentsService {
   Future<AssignmentCompletedResponseDto> completeAssignment(
     String assignmentId,
   ) async {
-    final httpClient = await _getAuthenticatedClient();
-    final response = await httpClient.post(
+    final response = await _httpClient.post(
       LibraryEndpoints.completeAssignmentById(assignmentId),
     );
 
@@ -57,15 +48,10 @@ class AssignmentsService {
     }
   }
 
-  // ============================================================
-  // ENDPOINTS FOR PSYCHOLOGISTS
-  // ============================================================
-
   Future<AssignmentCreatedResponseDto> assignContent(
     AssignmentRequestDto request,
   ) async {
-    final httpClient = await _getAuthenticatedClient();
-    final response = await httpClient.post(
+    final response = await _httpClient.post(
       LibraryEndpoints.assignments,
       body: request.toJson(),
     );
@@ -80,14 +66,13 @@ class AssignmentsService {
   Future<AssignmentsResponseDto> getPsychologistAssignments({
     String? patientId,
   }) async {
-    final httpClient = await _getAuthenticatedClient();
     final queryParameters = <String, dynamic>{};
 
     if (patientId != null) {
       queryParameters['patientId'] = patientId;
     }
 
-    final response = await httpClient.get(
+    final response = await _httpClient.get(
       LibraryEndpoints.psychologistAssignments,
       queryParameters: queryParameters,
     );

@@ -6,8 +6,8 @@ class Content {
   final String? overview;
   final String? posterUrl;
   final String? backdropUrl;
-  final String? rating;
-  final String? duration;
+  final double? rating;
+  final int? duration;
   final String? releaseDate;
   final List<String>? genres;
   final String? trailerUrl;
@@ -56,5 +56,32 @@ class Content {
     if (isVideo && channelName != null) return channelName!;
     if (releaseDate != null) return releaseDate!;
     return '';
+  }
+
+  /// Formatea la duración en minutos a formato legible
+  /// Ejemplos: 148 -> "2h 28min", 45 -> "45min"
+  String? get formattedDuration {
+    if (duration == null) return null;
+    final hours = duration! ~/ 60;
+    final minutes = duration! % 60;
+    if (hours > 0) {
+      return '${hours}h ${minutes}min';
+    } else {
+      return '${minutes}min';
+    }
+  }
+
+  /// Formatea el rating a una cadena con un decimal
+  /// Ejemplo: 7.5 -> "7.5/10"
+  String? get formattedRating {
+    if (rating == null) return null;
+    return '${rating!.toStringAsFixed(1)}/10';
+  }
+
+  /// Obtiene el año de lanzamiento desde releaseDate
+  /// Ejemplo: "2023-05-12" -> "2023"
+  String? get releaseYear {
+    if (releaseDate == null || releaseDate!.length < 4) return null;
+    return releaseDate!.substring(0, 4);
   }
 }
