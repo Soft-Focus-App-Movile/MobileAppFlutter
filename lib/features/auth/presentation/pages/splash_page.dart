@@ -28,26 +28,28 @@ class _SplashPageState extends State<SplashPage> {
     // Wait for splash animation
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // Check if there's an active session
-    final isAuthenticated = await SessionManager.hasActiveSession();
-
     if (!mounted) return;
 
-    if (isAuthenticated) {
-      // Get current user to check if they exist and token is valid
-      final user = await SessionManager.getCurrentUser();
+    try {
+      // Check if there's an active session
+      final isAuthenticated = await SessionManager.instance.hasActiveSession();
 
-      if (user != null && user.token != null && user.token!.isNotEmpty) {
-        // Check token expiration
-        // Note: Token expiration check is handled by SessionManager.hasActiveSession()
-        // If we get here, the session is valid
-        widget.onNavigateToHome();
+      if (isAuthenticated) {
+        final user = await SessionManager.instance.getCurrentUser();
+
+        if (user != null && user.token != null && user.token!.isNotEmpty) {
+          // Valid session - navigate to home
+          widget.onNavigateToHome();
+        } else {
+          // Invalid session - logout and go to login
+          await SessionManager.instance.logout();
+          widget.onNavigateToLogin();
+        }
       } else {
-        // Invalid session - logout and go to login
-        await SessionManager.logout();
         widget.onNavigateToLogin();
       }
-    } else {
+    } catch (e) {
+      // Error reading session - go to login
       widget.onNavigateToLogin();
     }
   }

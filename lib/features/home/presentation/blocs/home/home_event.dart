@@ -12,3 +12,8 @@ class LoadHomeData extends HomeEvent {
 class RefreshHomeData extends HomeEvent {
   const RefreshHomeData();
 }
+
+/// Event to check if user is a patient (has psychologist relationship)
+class CheckPatientStatusRequested extends HomeEvent {
+  const CheckPatientStatusRequested();
+}

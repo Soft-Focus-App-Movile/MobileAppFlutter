@@ -34,14 +34,10 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
       ),
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          if (state is HomeLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is HomeError) {
+          if (state.error != null) {
             return Center(
               child: Text(
-                'Error: ${state.message}',
+                'Error: ${state.error}',
                 style: sourceSansRegular,
               ),
             );

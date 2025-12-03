@@ -12,7 +12,9 @@ class NavigationHelper {
     if (user != null) {
       switch (user.userType) {
         case UserType.ADMIN:
-          homePage = const AdminHomePage();
+          // Admin navigation is handled by app_navigation.dart
+          // This helper is only used for legacy navigation
+          homePage = const GeneralHomePage();
           break;
         case UserType.PSYCHOLOGIST:
           homePage = const PsychologistHomePage();

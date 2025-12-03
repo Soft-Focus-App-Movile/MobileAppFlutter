@@ -52,6 +52,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _acceptedTerms = false;
+  bool _hasOpenedPrivacyPolicy = false;
+  bool _showPrivacyPolicyDialog = false;
 
   Set<String> _selectedSpecialties = {};
   bool _specialtiesExpanded = false;
@@ -201,6 +203,68 @@ class _RegisterPageState extends State<RegisterPage> {
           },
         );
       },
+    );
+  }
+
+  void _openPrivacyPolicyDialog() {
+    setState(() {
+      _showPrivacyPolicyDialog = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Política de Privacidad',
+          style: crimsonBold.copyWith(fontSize: 20, color: green29),
+        ),
+        content: SingleChildScrollView(
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: Text(
+              'En SoftFocus, tu privacidad y seguridad son nuestra máxima prioridad.\n\n'
+              '• Todas las conversaciones con nuestro asistente de IA están completamente encriptadas\n'
+              '• No almacenamos fotografías originales del análisis de emociones\n'
+              '• Todos los mensajes con tu psicólogo están protegidos por encriptación médica\n'
+              '• Tus registros diarios y estados de ánimo son completamente privados\n'
+              '• Utilizamos encriptación AES-256 para toda tu información\n'
+              '• Nunca compartimos tus datos con terceros ni con fines comerciales\n\n'
+              'Contacto: softfocusorg@gmail.com\n'
+              'Atención 24/7: 952 280 745',
+              style: sourceSansRegular.copyWith(
+                fontSize: 14,
+                color: gray828,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _showPrivacyPolicyDialog = false;
+                _hasOpenedPrivacyPolicy = true;
+              });
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: green29,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Entendido',
+              style: sourceSansBold.copyWith(color: white),
+            ),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
     );
   }
 
@@ -912,32 +976,57 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Terms checkbox
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _acceptedTerms,
-                        onChanged: !isLoading
-                            ? (value) {
-                                setState(() {
-                                  _acceptedTerms = value ?? false;
-                                });
-                              }
-                            : null,
-                        activeColor: green49,
-                        checkColor: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Acepto la política de privacidad',
-                          style: sourceSansRegular.copyWith(
-                            fontSize: 14,
-                            color: gray828,
+                  // Terms checkbox with privacy policy
+                  GestureDetector(
+                    onTap: !isLoading
+                        ? () {
+                            _openPrivacyPolicyDialog();
+                          }
+                        : null,
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _acceptedTerms,
+                          onChanged: !isLoading && _hasOpenedPrivacyPolicy
+                              ? (value) {
+                                  setState(() {
+                                    _acceptedTerms = value ?? false;
+                                  });
+                                }
+                              : (_) {
+                                  // Si intenta marcar sin haber abierto, mostrar diálogo
+                                  if (!_hasOpenedPrivacyPolicy) {
+                                    _openPrivacyPolicyDialog();
+                                  }
+                                },
+                          activeColor: green29,
+                          checkColor: white,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Acepto la política de privacidad',
+                                style: sourceSansRegular.copyWith(
+                                  fontSize: 14,
+                                  color: _hasOpenedPrivacyPolicy ? gray828 : grayA0,
+                                ),
+                              ),
+                              if (!_hasOpenedPrivacyPolicy)
+                                Text(
+                                  '(Toca para leer)',
+                                  style: sourceSansRegular.copyWith(
+                                    fontSize: 12,
+                                    color: green37,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 24),

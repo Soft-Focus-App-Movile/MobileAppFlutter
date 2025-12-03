@@ -71,7 +71,7 @@ app.*.map.json
 
 # Plataformas Nativas Específicas
 #####################################
-
+nul
 # Android
 # Ignorar directorios de build de Android y archivos de Gradle generados
 android/local.properties

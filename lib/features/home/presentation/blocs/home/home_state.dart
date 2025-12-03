@@ -1,37 +1,30 @@
 import 'package:equatable/equatable.dart';
 
-/// States for HomeBloc
-abstract class HomeState extends Equatable {
-  const HomeState();
+/// State for HomeBloc
+/// Contains flags to determine home screen behavior
+class HomeState extends Equatable {
+  final bool isLoading;
+  final bool isPatient;  // true if GENERAL user has psychologist relationship
+  final String? error;
+
+  const HomeState({
+    this.isLoading = true,
+    this.isPatient = false,
+    this.error,
+  });
+
+  HomeState copyWith({
+    bool? isLoading,
+    bool? isPatient,
+    String? error,
+  }) {
+    return HomeState(
+      isLoading: isLoading ?? this.isLoading,
+      isPatient: isPatient ?? this.isPatient,
+      error: error,
+    );
+  }
 
   @override
-  List<Object?> get props => [];
-}
-
-/// Initial state
-class HomeInitial extends HomeState {
-  const HomeInitial();
-}
-
-/// Loading state
-class HomeLoading extends HomeState {
-  const HomeLoading();
-}
-
-/// Loaded state
-class HomeLoaded extends HomeState {
-  const HomeLoaded();
-
-  @override
-  List<Object?> get props => [];
-}
-
-/// Error state
-class HomeError extends HomeState {
-  final String message;
-
-  const HomeError({required this.message});
-
-  @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [isLoading, isPatient, error];
 }

@@ -34,18 +34,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
       ),
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          if (state is HomeLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
 
-          if (state is HomeError) {
-            return Center(
-              child: Text(
-                'Error: ${state.message}',
-                style: sourceSansRegular,
-              ),
-            );
-          }
 
           // TODO: Implement Patient Home UI
           return Center(

@@ -8,6 +8,7 @@ import '../blocs/login/login_bloc.dart';
 import '../blocs/login/login_event.dart';
 import '../blocs/login/login_state.dart';
 import '../../domain/models/user_type.dart';
+import '../../data/local/user_session.dart';
 
 class LoginPage extends StatefulWidget {
   final Function() onLoginSuccess;
@@ -15,6 +16,7 @@ class LoginPage extends StatefulWidget {
   final Function() onNavigateToRegister;
   final Function(String email, String fullName, String tempToken) onNavigateToRegisterWithOAuth;
   final Function() onNavigateToPendingVerification;
+  final Function() onNavigateToForgotPassword;
 
   const LoginPage({
     super.key,
@@ -23,6 +25,7 @@ class LoginPage extends StatefulWidget {
     required this.onNavigateToRegister,
     required this.onNavigateToRegisterWithOAuth,
     required this.onNavigateToPendingVerification,
+    required this.onNavigateToForgotPassword,
   });
 
   @override
@@ -31,16 +34,20 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
+  final UserSession _userSession = UserSession();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocConsumer<LoginBloc, LoginState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           // Handle login success based on user type
           if (state is LoginSuccess) {
             final user = state.user;
+            // Save user to session before navigating
+            await _userSession.saveUser(user);
+
             if (user.userType == UserType.ADMIN) {
               widget.onAdminLoginSuccess();
             } else {
@@ -170,7 +177,26 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+
+                  // Forgot Password Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: widget.onNavigateToForgotPassword,
+                        child: Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: sourceSansRegular.copyWith(
+                            color: green49,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
 
                   // Login button
                   SizedBox(

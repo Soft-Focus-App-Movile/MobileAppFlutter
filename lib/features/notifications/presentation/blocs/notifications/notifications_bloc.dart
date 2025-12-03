@@ -51,7 +51,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
 
-    final user = await SessionManager.getCurrentUser();
+    final user = await SessionManager.instance.getCurrentUser();
     if (user == null) {
       emit(state.copyWith(
         isLoading: false,
@@ -107,7 +107,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     emit(state.copyWith(isRefreshing: true, error: null));
 
-    final user = await SessionManager.getCurrentUser();
+    final user = await SessionManager.instance.getCurrentUser();
     if (user == null) return;
 
     final preferencesResult = await getPreferencesUseCase(user.id);
@@ -162,7 +162,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     _currentFilter = event.status;
 
-    final user = await SessionManager.getCurrentUser();
+    final user = await SessionManager.instance.getCurrentUser();
     if (user == null) return;
 
     final preferencesResult = await getPreferencesUseCase(user.id);
@@ -223,7 +223,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           return notification;
         }).toList();
 
-        SessionManager.getCurrentUser().then((user) async {
+        SessionManager.instance.getCurrentUser().then((user) async {
           if (user != null) {
             final preferencesResult = await getPreferencesUseCase(user.id);
             final schedule = preferencesResult.fold(
@@ -242,7 +242,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     MarkAllAsRead event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await SessionManager.getCurrentUser();
+    final user = await SessionManager.instance.getCurrentUser();
     if (user == null) return;
 
     final result = await notificationRepository.markAllAsRead(user.id);
@@ -273,7 +273,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     DeleteNotification event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await SessionManager.getCurrentUser();
+    final user = await SessionManager.instance.getCurrentUser();
     if (user == null) return;
 
     final result = await notificationRepository.deleteNotification(event.notificationId);

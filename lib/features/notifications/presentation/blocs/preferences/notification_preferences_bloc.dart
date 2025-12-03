@@ -34,7 +34,7 @@ class NotificationPreferencesBloc
     try {
       emit(state.copyWith(isLoading: true, error: null));
 
-      final user = await SessionManager.getCurrentUser();
+      final user = await SessionManager.instance.getCurrentUser();
       if (user == null) {
         emit(state.copyWith(
           isLoading: false,
