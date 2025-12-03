@@ -131,3 +131,5 @@ google-services.json
 GoogleService-Info.plist
 
 # Si utilizas otro archivo de secretos, agrégalo aquí.
+# DevTools configuration (local development only)
+devtools_options.yaml

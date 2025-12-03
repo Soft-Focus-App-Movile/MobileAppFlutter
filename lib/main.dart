@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/ui/theme.dart';
 import 'core/navigation/app_navigation.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -26,25 +27,27 @@ class MainApp extends StatelessWidget {
       ),
     );
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => LoginBloc(repository: authRepository),
+    return ProviderScope(
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => LoginBloc(repository: authRepository),
+          ),
+          BlocProvider(
+            create: (context) => RegisterBloc(repository: authRepository),
+          ),
+          BlocProvider(
+            create: (context) => HomeBloc(),
+          ),
+        ],
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'Soft Focus',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.system,
+          routerConfig: AppNavigation.createRouter(),
         ),
-        BlocProvider(
-          create: (context) => RegisterBloc(repository: authRepository),
-        ),
-        BlocProvider(
-          create: (context) => HomeBloc(),
-        ),
-      ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Soft Focus',
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: AppNavigation.createRouter(),
       ),
     );
   }

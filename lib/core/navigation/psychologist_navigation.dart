@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
+import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -150,19 +151,6 @@ List<RouteBase> psychologistRoutes() {
       },
     ),
 
-    // Check-in Form Screen (for tracking/monitoring)
-    GoRoute(
-      path: AppRoute.checkInForm.path,
-      name: 'check_in_form',
-      builder: (context, state) {
-        // TODO: Tracking team - Implement CheckInFormPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Formulario de Seguimiento')),
-          body: const Center(
-            child: Text('TODO: Tracking team - Implementar CheckInFormPage'),
-          ),
-        );
-      },
-    ),
+
   ];
 }

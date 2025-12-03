@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/networking/http_client.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../auth/data/local/user_session.dart';
 import '../../data/datasources/tracking_remote_datasource.dart';
 import '../../data/datasources/tracking_remote_datasource_impl.dart';
 import '../../data/repositories/tracking_repository_impl.dart';
@@ -15,13 +18,43 @@ import '../providers/tracking_provider.dart';
 
 // ============= DATA SOURCE PROVIDERS =============
 
+final httpClientProvider = Provider<HttpClient>((ref) {
+  return HttpClient();
+});
+
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio();
-  dio.options.baseUrl = 'https://your-api-base-url.com/api';
+  dio.options.baseUrl = ApiConstants.baseUrl;
   dio.options.connectTimeout = const Duration(seconds: 30);
   dio.options.receiveTimeout = const Duration(seconds: 30);
+  
+  // Add auth interceptor
+  dio.interceptors.add(InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      // Get token from session (you'll need to implement this)
+      // For now, we'll add the header if token exists
+      final token = await _getAuthToken();
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      handler.next(options);
+    },
+  ));
+  
   return dio;
 });
+
+// Helper function to get auth token
+Future<String?> _getAuthToken() async {
+  try {
+    // Import and use your UserSession here
+    final userSession = UserSession();
+    final user = await userSession.getUser();
+    return user?.token;
+  } catch (e) {
+    return null;
+  }
+}
 
 final trackingRemoteDataSourceProvider = Provider<TrackingRemoteDataSource>((ref) {
   final dio = ref.watch(dioProvider);

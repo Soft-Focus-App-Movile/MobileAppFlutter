@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
+import '../../features/tracking/presentation/screens/diary_screen.dart';
+import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
 import 'route.dart';
 
 /// General user navigation graph.
@@ -49,15 +51,7 @@ List<RouteBase> generalRoutes() {
     GoRoute(
       path: AppRoute.diary.path,
       name: 'diary',
-      builder: (context, state) {
-        // TODO: Diary/Tracking team - Implement DiaryPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mi Diario')),
-          body: const Center(
-            child: Text('TODO: Diary team - Implementar DiaryPage'),
-          ),
-        );
-      },
+      builder: (context, state) => const DiaryScreen(),
     ),
 
     // Search Psychologist Screen
@@ -89,5 +83,14 @@ List<RouteBase> generalRoutes() {
         );
       },
     ),
+
+    // Check-in Form Screen
+    GoRoute(
+      path: AppRoute.checkInForm.path,
+      name: 'general_check_in_form',
+      builder: (context, state) => const CheckInFormScreen(),
+    ),
+
+
   ];
 }
