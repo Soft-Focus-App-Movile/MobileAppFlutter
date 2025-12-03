@@ -16,8 +16,8 @@ class ContentItemResponseDto {
   final String? overview;
   final String? posterUrl;
   final String? backdropUrl;
-  final String? rating;
-  final String? duration;
+  final double? rating;
+  final int? duration;
   final String? releaseDate;
   final List<String>? genres;
   final String? trailerUrl;
