@@ -46,7 +46,7 @@ class FilterBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: green49,
+        color: white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.all(24),
@@ -58,7 +58,7 @@ class FilterBottomSheet extends StatelessWidget {
             'Filtrar contenido',
             style: crimsonSemiBold.copyWith(
               fontSize: 20,
-              color: white,
+              color: green29,
             ),
           ),
           const SizedBox(height: 24),
@@ -66,7 +66,7 @@ class FilterBottomSheet extends StatelessWidget {
             'Filtrar por emoci�n',
             style: sourceSansSemiBold.copyWith(
               fontSize: 14,
-              color: white,
+              color: green29,
             ),
           ),
           const SizedBox(height: 12),
@@ -88,14 +88,14 @@ class FilterBottomSheet extends StatelessWidget {
                   emotion.displayName,
                   style: sourceSansRegular.copyWith(
                     fontSize: 14,
-                    color: isSelected ? green49 : white,
+                    color: isSelected ? green49 : green29,
                   ),
                 ),
-                backgroundColor: isSelected ? white : green37,
-                selectedColor: white,
+                backgroundColor: isSelected ? greenF2 : white,
+                selectedColor: greenF2,
                 checkmarkColor: green49,
                 side: BorderSide(
-                  color: isSelected ? white : greenBF,
+                  color: isSelected ? green49 : green29,
                   width: 1,
                 ),
               );
@@ -111,8 +111,8 @@ class FilterBottomSheet extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: white,
-                    side: const BorderSide(color: white),
+                    foregroundColor: green29,
+                    side: const BorderSide(color: green29),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -120,7 +120,7 @@ class FilterBottomSheet extends StatelessWidget {
                   ),
                   child: Text(
                     'Limpiar filtros',
-                    style: sourceSansSemiBold.copyWith(fontSize: 14, color: white),
+                    style: sourceSansSemiBold.copyWith(fontSize: 14, color: green29),
                   ),
                 ),
               ),
@@ -129,8 +129,8 @@ class FilterBottomSheet extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: white,
-                    foregroundColor: green49,
+                    backgroundColor: green49,
+                    foregroundColor: white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -138,7 +138,7 @@ class FilterBottomSheet extends StatelessWidget {
                   ),
                   child: Text(
                     'Aplicar',
-                    style: sourceSansSemiBold.copyWith(fontSize: 14, color: green49),
+                    style: sourceSansSemiBold.copyWith(fontSize: 14, color: white),
                   ),
                 ),
               ),

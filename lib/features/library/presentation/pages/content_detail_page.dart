@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
 import '../../../../core/networking/http_client.dart';
@@ -24,11 +25,14 @@ class ContentDetailPage extends StatefulWidget {
 class _ContentDetailPageState extends State<ContentDetailPage> {
   HttpClient? _httpClient;
   bool _isLoading = true;
+  bool _showTrailer = false;
+  WebViewController? _webViewController;
 
   @override
   void initState() {
     super.initState();
     _initializeHttpClient();
+    _initializeWebView();
   }
 
   Future<void> _initializeHttpClient() async {
@@ -38,6 +42,66 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
       _httpClient = HttpClient(token: user?.token);
       _isLoading = false;
     });
+  }
+
+  void _initializeWebView() {
+    if (widget.content.trailerUrl != null) {
+      final videoId = _extractYoutubeVideoId(widget.content.trailerUrl!);
+      if (videoId != null) {
+        final html = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body, html {
+            height: 100%;
+            background-color: #000;
+        }
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <iframe
+        src="https://www.youtube.com/embed/$videoId?autoplay=1&rel=0&controls=1&showinfo=0&modestbranding=1&playsinline=1&fs=0"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+    </iframe>
+</body>
+</html>
+        ''';
+
+        _webViewController = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(Colors.black)
+          ..loadHtmlString(html);
+      }
+    }
+  }
+
+  String? _extractYoutubeVideoId(String url) {
+    final regExp1 = RegExp(r'(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)');
+    final match1 = regExp1.firstMatch(url);
+    if (match1 != null) return match1.group(1);
+
+    final regExp2 = RegExp(r'(?:youtu\.be\/)([a-zA-Z0-9_-]+)');
+    final match2 = regExp2.firstMatch(url);
+    if (match2 != null) return match2.group(1);
+
+    return null;
   }
 
   @override
@@ -63,35 +127,37 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
               backgroundColor: black,
               iconTheme: const IconThemeData(color: white),
               flexibleSpace: FlexibleSpaceBar(
-                background: widget.content.displayImage.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: widget.content.displayImage,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: gray2C,
-                          child: const Center(
-                            child: CircularProgressIndicator(color: green49),
-                          ),
-                        ),
-                        errorWidget: (context, error, stackTrace) {
-                          return Container(
+                background: _showTrailer && _webViewController != null
+                    ? WebViewWidget(controller: _webViewController!)
+                    : widget.content.displayImage.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: widget.content.displayImage,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: gray2C,
+                              child: const Center(
+                                child: CircularProgressIndicator(color: green49),
+                              ),
+                            ),
+                            errorWidget: (context, error, stackTrace) {
+                              return Container(
+                                color: gray2C,
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  size: 80,
+                                  color: gray808,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
                             color: gray2C,
                             child: const Icon(
-                              Icons.image_not_supported,
+                              Icons.movie,
                               size: 80,
                               color: gray808,
                             ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: gray2C,
-                        child: const Icon(
-                          Icons.movie,
-                          size: 80,
-                          color: gray808,
-                        ),
-                      ),
+                          ),
               ),
               actions: [
                 BlocBuilder<ContentDetailBloc, ContentDetailState>(
@@ -198,6 +264,41 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 24),
+                    if (widget.content.trailerUrl != null && _webViewController != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showTrailer = true;
+                            });
+                          },
+                          icon: const Icon(Icons.play_circle_outline),
+                          label: const Text('Ver tráiler'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: green49,
+                            side: const BorderSide(color: green49),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    if (widget.content.trailerUrl != null && _webViewController != null)
+                      const SizedBox(height: 12),
+                    if (widget.content.externalUrl != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _launchUrl(widget.content.externalUrl!),
+                          icon: const Icon(Icons.open_in_new),
+                          label: Text(_getButtonLabel(widget.content.type)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: green49,
+                            foregroundColor: white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
                     if (widget.content.emotionalTags != null &&
                         widget.content.emotionalTags!.isNotEmpty) ...[
                       const SizedBox(height: 24),
@@ -219,37 +320,6 @@ class _ContentDetailPageState extends State<ContentDetailPage> {
                             labelStyle: sourceSansRegular.copyWith(color: white),
                           );
                         }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    if (widget.content.externalUrl != null)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _launchUrl(widget.content.externalUrl!),
-                          icon: const Icon(Icons.open_in_new),
-                          label: Text(_getButtonLabel(widget.content.type)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: green49,
-                            foregroundColor: white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    if (widget.content.trailerUrl != null) ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _launchUrl(widget.content.trailerUrl!),
-                          icon: const Icon(Icons.play_circle_outline),
-                          label: const Text('Ver tráiler'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: green49,
-                            side: const BorderSide(color: green49),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
                       ),
                     ],
                   ],
