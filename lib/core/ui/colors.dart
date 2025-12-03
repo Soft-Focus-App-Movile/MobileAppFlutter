@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 const gray070 = Color(0xFF777070);
 const black = Color(0xFF000000);
 const transparent = Color(0x00000000);
+const gray1C = Color(0xFF1C1C1C);
 const gray222 = Color(0xFF222222);
 const gray242 = Color(0xFF242424);
 const gray2C = Color(0xFF2C2C2C);

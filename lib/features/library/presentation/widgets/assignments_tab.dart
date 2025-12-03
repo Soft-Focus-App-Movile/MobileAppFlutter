@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/common/status.dart';
+import '../../../../core/ui/colors.dart';
+import '../../../../core/ui/text_styles.dart';
 import '../blocs/assignments/assignments_bloc.dart';
 import '../blocs/assignments/assignments_event.dart';
 import '../blocs/assignments/assignments_state.dart';
 import '../../domain/models/assignment.dart';
+import 'content_detail_page.dart';
 
 class AssignmentsTab extends StatefulWidget {
   const AssignmentsTab({super.key});
@@ -26,7 +31,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
       builder: (context, state) {
         switch (state.status) {
           case Status.loading:
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: green49));
 
           case Status.failure:
             return Center(
@@ -35,12 +40,19 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                 children: [
                   const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text(state.message ?? 'Error al cargar asignaciones'),
+                  Text(
+                    state.message ?? 'Error al cargar asignaciones',
+                    style: sourceSansRegular.copyWith(fontSize: 14, color: white),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
                       context.read<AssignmentsBloc>().add(const LoadAssignments());
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: green49,
+                      foregroundColor: white,
+                    ),
                     child: const Text('Reintentar'),
                   ),
                 ],
@@ -50,59 +62,58 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
           case Status.success:
             if (state.assignments.isEmpty) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No tienes contenido asignado',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tu psicólogo puede asignarte contenido',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'No tienes contenido asignado',
+                  style: sourceSansRegular.copyWith(
+                    fontSize: 14,
+                    color: white.withOpacity(0.7),
+                  ),
                 ),
               );
             }
 
-            return Column(
+            final movieAssignments = state.assignments
+                .where((a) => a.content.isMovie)
+                .toList();
+            final musicAssignments = state.assignments
+                .where((a) => a.content.isMusic)
+                .toList();
+            final videoAssignments = state.assignments
+                .where((a) => a.content.isVideo)
+                .toList();
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.grey[100],
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem('Total', state.totalAssignments, Colors.blue),
-                      _buildStatItem('Pendientes', state.pendingCount, Colors.orange),
-                      _buildStatItem('Completadas', state.completedCount, Colors.green),
-                    ],
+                if (movieAssignments.isNotEmpty) ...[
+                  Text(
+                    'Películas asignadas',
+                    style: sourceSansBold.copyWith(fontSize: 18, color: white),
                   ),
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<AssignmentsBloc>().add(const LoadAssignments());
-                    },
-                    child: ListView.builder(
-                      itemCount: state.assignments.length,
-                      itemBuilder: (context, index) {
-                        final assignment = state.assignments[index];
-                        return _buildAssignmentCard(context, assignment);
-                      },
-                    ),
+                  const SizedBox(height: 8),
+                  ...movieAssignments.map((assignment) =>
+                      _buildAssignmentCard(context, assignment)),
+                  const SizedBox(height: 8),
+                ],
+                if (musicAssignments.isNotEmpty) ...[
+                  Text(
+                    'Música asignada',
+                    style: sourceSansBold.copyWith(fontSize: 18, color: white),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  ...musicAssignments.map((assignment) =>
+                      _buildAssignmentCard(context, assignment)),
+                  const SizedBox(height: 8),
+                ],
+                if (videoAssignments.isNotEmpty) ...[
+                  Text(
+                    'Videos asignados',
+                    style: sourceSansBold.copyWith(fontSize: 18, color: white),
+                  ),
+                  const SizedBox(height: 8),
+                  ...videoAssignments.map((assignment) =>
+                      _buildAssignmentCard(context, assignment)),
+                ],
               ],
             );
 
@@ -113,128 +124,224 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
     );
   }
 
-  Widget _buildStatItem(String label, int value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value.toString(),
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
   Widget _buildAssignmentCard(BuildContext context, Assignment assignment) {
     final content = assignment.content;
+    final dateFormat = DateFormat('dd/MM/yy');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (content.displayImage.isNotEmpty)
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              child: Image.network(
-                content.displayImage,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 160,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image_not_supported, size: 50),
-                  );
-                },
-              ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: gray1C,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ContentDetailPage(content: content),
             ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        content.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: content.displayImage,
+                  width: 100,
+                  height: 140,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 100,
+                    height: 140,
+                    color: gray828,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: green49),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 100,
+                    height: 140,
+                    color: gray828,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 140,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              content.title,
+                              style: sourceSansSemiBold.copyWith(
+                                fontSize: 16,
+                                color: white,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Text(
+                                  _getTypeLabel(content.type),
+                                  style: sourceSansRegular.copyWith(
+                                    fontSize: 12,
+                                    color: gray828,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (content.duration != null) ...[
+                                  Text(
+                                    ' • ',
+                                    style: sourceSansRegular.copyWith(
+                                      fontSize: 12,
+                                      color: gray828,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${content.duration} min',
+                                    style: sourceSansRegular.copyWith(
+                                      fontSize: 12,
+                                      color: gray828,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Asignado: ${dateFormat.format(assignment.assignedDate)}',
+                              style: sourceSansRegular.copyWith(
+                                fontSize: 11,
+                                color: gray828,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (assignment.isCompleted) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: greenEB2,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Completado: ${assignment.completedDate != null ? dateFormat.format(assignment.completedDate!) : ""}',
+                                    style: sourceSansRegular.copyWith(
+                                      fontSize: 11,
+                                      color: greenEB2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (assignment.isCompleted)
-                      const Icon(Icons.check_circle, color: Colors.green, size: 24),
-                  ],
-                ),
-                if (assignment.notes != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.notes, size: 16, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            assignment.notes!,
-                            style: const TextStyle(fontSize: 13),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ContentDetailPage(content: content),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: green65,
+                                foregroundColor: greenF2,
+                                shape: RoundedCornerShape(8),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                minimumSize: const Size(0, 36),
+                              ),
+                              child: Text(
+                                'Ver',
+                                style: sourceSansSemiBold.copyWith(
+                                  fontSize: 13,
+                                  color: greenF2,
+                                ),
+                                maxLines: 1,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                          if (!assignment.isCompleted) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  context.read<AssignmentsBloc>().add(
+                                        CompleteAssignment(
+                                            assignmentId: assignment.id),
+                                      );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2D2D2D),
+                                  foregroundColor: greenF2,
+                                  shape: RoundedCornerShape(8),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  minimumSize: const Size(0, 36),
+                                ),
+                                child: Text(
+                                  'Completar',
+                                  style: sourceSansSemiBold.copyWith(
+                                    fontSize: 13,
+                                    color: greenF2,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  'Asignado: ${_formatDate(assignment.assignedDate)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
-                if (!assignment.isCompleted) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<AssignmentsBloc>().add(
-                              CompleteAssignment(assignmentId: assignment.id),
-                            );
-                      },
-                      icon: const Icon(Icons.check),
-                      label: const Text('Marcar como completada'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _getTypeLabel(String type) {
+    switch (type.toLowerCase()) {
+      case 'movie':
+        return 'Película';
+      case 'music':
+        return 'Música';
+      case 'video':
+        return 'Video';
+      default:
+        return type;
+    }
   }
 }
