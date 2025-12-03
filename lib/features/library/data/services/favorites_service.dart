@@ -1,17 +1,21 @@
 import 'dart:convert';
 import '../../../../core/networking/http_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../auth/data/local/user_session.dart';
 import '../models/request/favorite_request_dto.dart';
 import '../models/response/content_list_response_dto.dart';
 
 class FavoritesService {
-  final HttpClient _httpClient;
+  final UserSession _userSession = UserSession();
 
-  FavoritesService({HttpClient? httpClient})
-      : _httpClient = httpClient ?? HttpClient();
+  Future<HttpClient> _getAuthenticatedClient() async {
+    final user = await _userSession.getUser();
+    return HttpClient(token: user?.token);
+  }
 
   Future<ContentListResponseDto> getFavorites() async {
-    final response = await _httpClient.get(LibraryEndpoints.favorites);
+    final httpClient = await _getAuthenticatedClient();
+    final response = await httpClient.get(LibraryEndpoints.favorites);
 
     if (response.statusCode == 200) {
       return ContentListResponseDto.fromJson(jsonDecode(response.body));
@@ -21,7 +25,8 @@ class FavoritesService {
   }
 
   Future<void> addFavorite(FavoriteRequestDto request) async {
-    final response = await _httpClient.post(
+    final httpClient = await _getAuthenticatedClient();
+    final response = await httpClient.post(
       LibraryEndpoints.favorites,
       body: request.toJson(),
     );
@@ -32,7 +37,8 @@ class FavoritesService {
   }
 
   Future<void> removeFavorite(String favoriteId) async {
-    final response = await _httpClient.delete(
+    final httpClient = await _getAuthenticatedClient();
+    final response = await httpClient.delete(
       LibraryEndpoints.deleteFavorite(favoriteId),
     );
 

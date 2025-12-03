@@ -1,20 +1,22 @@
 import 'dart:convert';
 import '../../../../core/networking/http_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../auth/data/local/user_session.dart';
 import '../models/request/content_search_request_dto.dart';
 import '../models/response/content_item_response_dto.dart';
 import '../models/response/content_search_response_dto.dart';
 
-/// Service for content search operations
 class ContentSearchService {
-  final HttpClient _httpClient;
+  final UserSession _userSession = UserSession();
 
-  ContentSearchService({HttpClient? httpClient})
-      : _httpClient = httpClient ?? HttpClient();
+  Future<HttpClient> _getAuthenticatedClient() async {
+    final user = await _userSession.getUser();
+    return HttpClient(token: user?.token);
+  }
 
-  /// Get content by ID
   Future<ContentItemResponseDto> getContentById(String contentId) async {
-    final response = await _httpClient.get(
+    final httpClient = await _getAuthenticatedClient();
+    final response = await httpClient.get(
       LibraryEndpoints.getContentById(contentId),
     );
 
@@ -25,11 +27,11 @@ class ContentSearchService {
     }
   }
 
-  /// Search content
   Future<ContentSearchResponseDto> searchContent(
     ContentSearchRequestDto request,
   ) async {
-    final response = await _httpClient.post(
+    final httpClient = await _getAuthenticatedClient();
+    final response = await httpClient.post(
       LibraryEndpoints.search,
       body: request.toJson(),
     );
