@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/common/status.dart';
 import '../../../data/services/assignments_service.dart';
 import '../../../data/mappers/content_mapper.dart';
+import '../../../domain/models/assignment.dart';
 import 'assignments_event.dart';
 import 'assignments_state.dart';
 
@@ -65,7 +66,7 @@ class AssignmentsBloc extends Bloc<AssignmentsEvent, AssignmentsState> {
           );
         }
         return assignment;
-      }).toList() as List<Assignment>;
+      }).toList();
 
       emit(state.copyWith(
         assignments: updatedAssignments,
