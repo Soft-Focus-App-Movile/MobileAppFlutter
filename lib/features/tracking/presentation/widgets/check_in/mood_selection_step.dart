@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/utils/mood_helper.dart';
 
 class MoodSelectionStep extends StatelessWidget {
   final int selectedMood;
@@ -12,21 +13,7 @@ class MoodSelectionStep extends StatelessWidget {
     required this.onNext,
   }) : super(key: key);
 
-  String _getMoodEmoji(int level) {
-    if (level <= 2) return '😢';
-    if (level <= 4) return '😕';
-    if (level <= 6) return '😐';
-    if (level <= 8) return '🙂';
-    return '😄';
-  }
 
-  String _getMoodDescription(int level) {
-    if (level <= 2) return 'Me siento terrible';
-    if (level <= 4) return 'Me siento mal';
-    if (level <= 6) return 'Me siento regular';
-    if (level <= 8) return 'Me siento bien';
-    return 'Me siento excelente';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,15 +31,26 @@ class MoodSelectionStep extends StatelessWidget {
         ),
         const SizedBox(height: 48),
         
-        // Emoji display
-        Text(
-          _getMoodEmoji(selectedMood),
-          style: const TextStyle(fontSize: 80),
+        // Mood image display
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(60),
+            color: Colors.white.withOpacity(0.1),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(60),
+            child: Image.asset(
+              MoodHelper.getMoodImage(selectedMood),
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         
         Text(
-          _getMoodDescription(selectedMood),
+          MoodHelper.getMoodDescription(selectedMood),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 20,

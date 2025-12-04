@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/emotional_calendar_entry.dart';
+import '../../../../../core/utils/mood_helper.dart';
 
 class EmotionalCalendarGrid extends StatelessWidget {
   final List<EmotionalCalendarEntry> entries;
@@ -127,9 +128,16 @@ class EmotionalCalendarGrid extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (hasEntry)
-                        Text(
-                          entry.emotionalEmoji,
-                          style: const TextStyle(fontSize: 20),
+                        Container(
+                          width: 24,
+                          height: 24,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              MoodHelper.getMoodImageFromLevel(entry.moodLevel),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         )
                       else
                         Text(

@@ -10,6 +10,7 @@ import '../widgets/check_in/summary_step.dart';
 import '../bloc/tracking_bloc.dart';
 import '../bloc/tracking_event.dart';
 import '../bloc/tracking_state.dart';
+import '../../../../core/utils/mood_helper.dart';
 
 class CheckInFormScreen extends StatefulWidget {
   const CheckInFormScreen({Key? key}) : super(key: key);
@@ -43,14 +44,6 @@ class _CheckInFormScreenState extends State<CheckInFormScreen> {
     return '😄';
   }
 
-  String _getMoodDescription(int level) {
-    if (level <= 2) return 'Me siento terrible';
-    if (level <= 4) return 'Me siento mal';
-    if (level <= 6) return 'Me siento regular';
-    if (level <= 8) return 'Me siento bien';
-    return 'Me siento excelente';
-  }
-
   void _nextStep() {
     if (_currentStep < _totalSteps - 1) {
       setState(() {
@@ -74,7 +67,7 @@ class _CheckInFormScreenState extends State<CheckInFormScreen> {
       _isSubmitting = true;
     });
 
-    _moodDescription = _getMoodDescription(_moodLevel);
+    _moodDescription = MoodHelper.getMoodDescription(_moodLevel);
 
     // 1. Create Check-In
     context.read<TrackingBloc>().add(

@@ -20,25 +20,25 @@ class _SymptomsSelectionStepState extends State<SymptomsSelectionStep> {
   bool _showPositiveSymptoms = false;
 
   static const List<String> _negativeSymptoms = [
-    'Ansiedad',
-    'Tristeza',
-    'Estrés',
-    'Insomnio',
-    'Fatiga',
-    'Irritabilidad',
-    'Pérdida de apetito',
-    'Dificultad para concentrarse',
+    '😰 Ansiedad',
+    '😫 Cansancio',
+    '😠 Irritabilidad',
+    '😢 Tristeza',
+    '😴 Estrés',
+    '😌 Insomnio',
+    '🤕 Dolor físico',
+    '⚪ Cambio de apetito',
   ];
 
   static const List<String> _positiveSymptoms = [
-    'Energía',
-    'Motivación',
-    'Tranquilidad',
-    'Alegría',
-    'Concentración',
-    'Optimismo',
-    'Buen apetito',
-    'Sueño reparador',
+    '😊 Felicidad',
+    '⚡ Energía',
+    '🎯 Motivación',
+    '😌 Tranquilidad',
+    '🤗 Optimismo',
+    '💪 Confianza',
+    '🧘 Relajación',
+    '✨ Creatividad',
   ];
 
   List<String> get _currentSymptoms => _showPositiveSymptoms ? _positiveSymptoms : _negativeSymptoms;

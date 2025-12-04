@@ -108,16 +108,27 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
     }
 
-    // Mostrar datos reales si están disponibles
     if (state is TrackingLoaded && state.checkInHistory != null) {
       final checkIns = state.checkInHistory!.checkIns;
-      final totalRecords = checkIns.length;
-      final averageLevel = totalRecords > 0 
-          ? _calculateAverage(checkIns.map((e) => e.emotionalLevel.toDouble()).toList())
-          : '0.0';
+      
+      if (checkIns.isEmpty) {
+        return const EmptyProgressState();
+      }
       
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Your Activity',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B8E7C),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Activity Chart
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
@@ -125,158 +136,57 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text(
-                    'Actividad Reciente',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF6B8E7C),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        totalRecords > 0 
-                            ? 'Tienes $totalRecords registros\nde seguimiento emocional'
-                            : 'No hay registros aún\nComienza creando un check-in',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: ActivityChart(checkIns: checkIns),
             ),
           ),
+          
           const SizedBox(height: 24),
+          
           const Text(
             'Estadísticas',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFF6B8E7C),
             ),
           ),
           const SizedBox(height: 16),
-          _buildStatCard('Total de registros', totalRecords.toString(), '📊'),
+          
+          // Statistics Cards
+          StatisticsCard(
+            title: 'Total de registros',
+            value: checkIns.length.toString(),
+            icon: '📊',
+          ),
           const SizedBox(height: 12),
-          _buildStatCard('Nivel emocional promedio', averageLevel, '😊'),
+          
+          StatisticsCard(
+            title: 'Nivel emocional promedio',
+            value: _calculateAverage(checkIns.map((e) => e.emotionalLevel.toDouble()).toList()),
+            icon: '😊',
+          ),
+          const SizedBox(height: 12),
+          
+          StatisticsCard(
+            title: 'Nivel de energía promedio',
+            value: _calculateAverage(checkIns.map((e) => e.energyLevel.toDouble()).toList()),
+            icon: '⚡',
+          ),
+          const SizedBox(height: 12),
+          
+          StatisticsCard(
+            title: 'Horas de sueño promedio',
+            value: _calculateAverage(checkIns.map((e) => e.sleepHours.toDouble()).toList()),
+            icon: '😴',
+          ),
         ],
       );
     }
     
-    // Contenido por defecto cuando no hay datos
-    return Column(
-      children: [
-        Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const Text(
-                  'Actividad Reciente',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6B8E7C),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'No hay registros aún\nComienza creando un check-in',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          'Estadísticas',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF6B8E7C),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildStatCard('Total de registros', '0', '📊'),
-        const SizedBox(height: 12),
-        _buildStatCard('Nivel emocional promedio', '0.0', '😊'),
-      ],
-    );
+    return const EmptyProgressState();
   }
 
-  Widget _buildStatCard(String title, String value, String icon) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Text(
-              icon,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF6B8E7C),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   String _calculateAverage(List<double> values) {
     if (values.isEmpty) return '0.0';
