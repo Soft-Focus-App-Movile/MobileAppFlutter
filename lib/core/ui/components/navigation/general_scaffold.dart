@@ -12,6 +12,9 @@ import '../../../../features/therapy/data/services/therapy_service.dart';
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
 import '../../../../features/library/presentation/pages/library_page.dart';
+import '../../../../features/tracking/presentation/screens/diary_screen.dart';
+import '../../../../features/tracking/presentation/bloc/tracking_bloc.dart';
+import '../../../../features/tracking/injection_container.dart' as tracking_di;
 import '../../../navigation/route.dart';
 import '../../colors.dart';
 
@@ -40,7 +43,7 @@ class _GeneralScaffoldState extends State<GeneralScaffold> {
         index: _selectedIndex,
         children: [
           const GeneralHomePage(),
-          _buildDiaryPlaceholder(),
+          _buildDiaryPage(),
           _buildAIPlaceholder(),
           const LibraryPage(),
           _buildProfilePage(),
@@ -49,12 +52,10 @@ class _GeneralScaffoldState extends State<GeneralScaffold> {
     );
   }
 
-  Widget _buildDiaryPlaceholder() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mi Diario')),
-      body: const Center(
-        child: Text('TODO: Diary team - Implementar DiaryPage'),
-      ),
+  Widget _buildDiaryPage() {
+    return BlocProvider<TrackingBloc>(
+      create: (context) => tracking_di.sl<TrackingBloc>(),
+      child: const DiaryScreen(),
     );
   }
 

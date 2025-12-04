@@ -1,22 +1,24 @@
-/*import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/check_in/mood_selection_step.dart';
 import '../widgets/check_in/category_selection_step.dart';
 import '../widgets/check_in/details_step.dart';
 import '../widgets/check_in/symptoms_selection_step.dart';
 import '../widgets/check_in/levels_step.dart';
 import '../widgets/check_in/summary_step.dart';
-import '../di/tracking_di.dart';
-import '../providers/tracking_provider.dart';
+import '../bloc/tracking_bloc.dart';
+import '../bloc/tracking_event.dart';
+import '../bloc/tracking_state.dart';
 
-class CheckInFormScreen extends ConsumerStatefulWidget {
+class CheckInFormScreen extends StatefulWidget {
   const CheckInFormScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<CheckInFormScreen> createState() => _CheckInFormScreenState();
+  State<CheckInFormScreen> createState() => _CheckInFormScreenState();
 }
 
-class _CheckInFormScreenState extends ConsumerState<CheckInFormScreen> {
+class _CheckInFormScreenState extends State<CheckInFormScreen> {
   int _currentStep = 0;
   final int _totalSteps = 6;
 
@@ -31,15 +33,7 @@ class _CheckInFormScreenState extends ConsumerState<CheckInFormScreen> {
   int _sleepHours = 7;
   String _notes = '';
 
-  @override
-  void initState() {
-    super.initState();
-    // Reset form states
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(checkInFormNotifierProvider.notifier).reset();
-      ref.read(emotionalCalendarFormNotifierProvider.notifier).reset();
-    });
-  }
+  bool _isSubmitting = false;
 
   String _getMoodEmoji(int level) {
     if (level <= 2) return '😢';
@@ -74,129 +68,145 @@ class _CheckInFormScreenState extends ConsumerState<CheckInFormScreen> {
   }
 
   Future<void> _submitForm() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
     _moodDescription = _getMoodDescription(_moodLevel);
 
     // 1. Create Check-In
-    await ref.read(checkInFormNotifierProvider.notifier).createCheckIn(
-          emotionalLevel: _emotionalLevel,
-          energyLevel: _energyLevel,
-          moodDescription: _moodDescription,
-          sleepHours: _sleepHours,
-          symptoms: _selectedSymptoms,
-          notes: _notes.isEmpty ? null : _notes,
+    context.read<TrackingBloc>().add(
+          CreateCheckInEvent(
+            emotionalLevel: _emotionalLevel,
+            energyLevel: _energyLevel,
+            moodDescription: _moodDescription,
+            sleepHours: _sleepHours,
+            symptoms: _selectedSymptoms,
+            notes: _notes.isEmpty ? null : _notes,
+          ),
         );
+  }
 
+  void _onCheckInCreated() {
     // 2. Create Emotional Calendar Entry
     final today = DateTime.now();
-    final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}T00:00:00.000Z';
+    final dateString =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}T00:00:00.000Z';
 
-    await ref.read(emotionalCalendarFormNotifierProvider.notifier).createEmotionalCalendarEntry(
-          date: dateString,
-          emotionalEmoji: _selectedMoodEmoji,
-          moodLevel: _moodLevel,
-          emotionalTags: _selectedCategories,
+    context.read<TrackingBloc>().add(
+          CreateEmotionalCalendarEntryEvent(
+            date: dateString,
+            emotionalEmoji: _selectedMoodEmoji,
+            moodLevel: _moodLevel,
+            emotionalTags: _selectedCategories,
+          ),
         );
+  }
+
+  void _onBothCompleted() {
+    // Refresh data
+    context.read<TrackingBloc>().add(RefreshDataEvent());
+
+    // Navigate back
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final checkInFormState = ref.watch(checkInFormNotifierProvider);
-    final emotionalCalendarFormState = ref.watch(emotionalCalendarFormNotifierProvider);
-
-    // Listen to success state
-    ref.listen<CheckInFormState>(checkInFormNotifierProvider, (previous, next) {
-      if (next.isSuccess && emotionalCalendarFormState.isSuccess) {
-        // Both completed successfully
-        ref.read(trackingNotifierProvider.notifier).refreshData();
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.of(context).pop();
-            // Optionally navigate to diary
-            // Navigator.of(context).pushReplacementNamed('/diary');
-          }
-        });
-      } else if (next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
-
-    ref.listen<EmotionalCalendarFormState>(
-      emotionalCalendarFormNotifierProvider,
-      (previous, next) {
-        if (next.error != null) {
+    return BlocListener<TrackingBloc, TrackingState>(
+      listener: (context, state) {
+        if (state is CheckInFormSuccess) {
+          // Check-in created, now create calendar entry
+          _onCheckInCreated();
+        } else if (state is EmotionalCalendarFormSuccess) {
+          // Both completed
+          _onBothCompleted();
+        } else if (state is CheckInFormError) {
+          setState(() {
+            _isSubmitting = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(next.error!),
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is EmotionalCalendarFormError) {
+          setState(() {
+            _isSubmitting = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
               backgroundColor: Colors.red,
             ),
           );
         }
       },
-    );
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF6B8E7C),
-      appBar: AppBar(
+      child: Scaffold(
         backgroundColor: const Color(0xFF6B8E7C),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF6B8E7C),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicator
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                '${_currentStep + 1}/$_totalSteps',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-
-            // Steps content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildCurrentStep(checkInFormState, emotionalCalendarFormState),
-              ),
-            ),
-
-            // Navigation buttons
-            if (_currentStep > 0 && _currentStep < _totalSteps - 1)
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Progress indicator
               Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: _previousStep,
-                      child: const Text(
-                        'Atrás',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  '${_currentStep + 1}/$_totalSteps',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-          ],
+
+              // Steps content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: _buildCurrentStep(),
+                ),
+              ),
+
+              // Navigation buttons
+              if (_currentStep > 0 && _currentStep < _totalSteps - 1)
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: _previousStep,
+                        child: const Text(
+                          'Atrás',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCurrentStep(CheckInFormState checkInFormState, EmotionalCalendarFormState emotionalCalendarFormState) {
-    final isLoading = checkInFormState.isLoading || emotionalCalendarFormState.isLoading;
+  Widget _buildCurrentStep() {
     switch (_currentStep) {
       case 0:
         return MoodSelectionStep(
@@ -273,11 +283,11 @@ class _CheckInFormScreenState extends ConsumerState<CheckInFormScreen> {
       case 5:
         return SummaryStep(
           onSubmit: _submitForm,
-          isLoading: isLoading,
+          isLoading: _isSubmitting,
         );
 
       default:
         return const SizedBox();
     }
   }
-}*/
+}

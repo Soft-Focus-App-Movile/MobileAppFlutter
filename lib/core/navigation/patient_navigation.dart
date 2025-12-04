@@ -67,7 +67,7 @@ List<RouteBase> patientRoutes() {
     // Progress Screen
     GoRoute(
       path: AppRoute.progress.path,
-      name: 'progress',
+      name: 'patient_progress',
       builder: (context, state) {
         // TODO: Tracking team - Implement ProgressScreen with BLoC
         return Scaffold(

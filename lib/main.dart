@@ -9,9 +9,15 @@ import 'features/auth/presentation/blocs/login/login_bloc.dart';
 import 'features/auth/presentation/blocs/register/register_bloc.dart';
 import 'features/home/presentation/blocs/home/home_bloc.dart';
 import 'core/networking/http_client.dart';
+import 'features/tracking/injection_container.dart' as di;
+import 'features/tracking/presentation/bloc/tracking_bloc.dart';
+import 'features/tracking/presentation/bloc/tracking_event.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await di.init();
+
   runApp(const MainApp());
 }
 
@@ -38,6 +44,11 @@ class MainApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => HomeBloc(),
+          ),
+
+          BlocProvider<TrackingBloc>(
+            create: (context) => di.sl<TrackingBloc>()
+              ..add(LoadInitialDataEvent()), // Carga datos iniciales
           ),
         ],
         child: MaterialApp.router(

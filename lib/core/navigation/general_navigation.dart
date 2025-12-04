@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-// TODO: Tracking team - Uncomment when using BLoC pattern
-// import '../../features/tracking/presentation/screens/diary_screen.dart';
-// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+import '../../features/tracking/presentation/screens/diary_screen.dart';
+import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+import '../../features/tracking/presentation/screens/progress_screen.dart';
+import '../../features/tracking/presentation/bloc/tracking_bloc.dart';
+import '../../features/tracking/injection_container.dart' as tracking_di;
 import '../../features/profiles/presentation/pages/general/connect_psychologist_page.dart';
 import '../../features/profiles/presentation/pages/edit/edit_profile_page.dart';
 import '../../features/profiles/presentation/blocs/connect_psychologist/connect_psychologist_bloc.dart';
@@ -90,22 +92,13 @@ List<RouteBase> generalRoutes() {
     ),
 
     // Diary Screen
-    // TODO: Tracking team - Uncomment when using BLoC pattern
-    // GoRoute(
-    //   path: AppRoute.diary.path,
-    //   name: 'diary',
-    //   builder: (context, state) => const DiaryScreen(),
-    // ),
     GoRoute(
       path: AppRoute.diary.path,
       name: 'diary',
       builder: (context, state) {
-        // TODO: Diary/Tracking team - Implement DiaryPage with BLoC
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mi Diario')),
-          body: const Center(
-            child: Text('TODO: Diary team - Implementar DiaryPage con BLoC'),
-          ),
+        return BlocProvider<TrackingBloc>(
+          create: (context) => tracking_di.sl<TrackingBloc>(),
+          child: const DiaryScreen(),
         );
       },
     ),
@@ -125,11 +118,27 @@ List<RouteBase> generalRoutes() {
     ),
 
     // Check-in Form Screen
-    // TODO: Tracking team - Uncomment when using BLoC pattern
-    // GoRoute(
-    //   path: AppRoute.checkInForm.path,
-    //   name: 'general_check_in_form',
-    //   builder: (context, state) => const CheckInFormScreen(),
-    // ),
+    GoRoute(
+      path: AppRoute.checkInForm.path,
+      name: 'general_check_in_form',
+      builder: (context, state) {
+        return BlocProvider<TrackingBloc>(
+          create: (context) => tracking_di.sl<TrackingBloc>(),
+          child: const CheckInFormScreen(),
+        );
+      },
+    ),
+
+    // Progress Screen
+    GoRoute(
+      path: AppRoute.progress.path,
+      name: 'progress',
+      builder: (context, state) {
+        return BlocProvider<TrackingBloc>(
+          create: (context) => tracking_di.sl<TrackingBloc>(),
+          child: const ProgressScreen(),
+        );
+      },
+    ),
   ];
 }

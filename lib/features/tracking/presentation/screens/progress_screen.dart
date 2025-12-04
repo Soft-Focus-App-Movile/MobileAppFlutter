@@ -1,32 +1,30 @@
-/*import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/tracking_bloc.dart';
+import '../bloc/tracking_state.dart';
+import '../bloc/tracking_event.dart';
+import '../widgets/progress/empty_progress_state.dart';
 import '../widgets/progress/activity_chart.dart';
 import '../widgets/progress/statistics_card.dart';
-import '../widgets/progress/empty_progress_state.dart';
-import '../di/tracking_di.dart';
-import '../providers/tracking_provider.dart';
 
-class ProgressScreen extends ConsumerStatefulWidget {
+class ProgressScreen extends StatefulWidget {
   const ProgressScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
+  State<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends ConsumerState<ProgressScreen> {
+class _ProgressScreenState extends State<ProgressScreen> {
   @override
   void initState() {
     super.initState();
-    // Load check-in history when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(trackingNotifierProvider.notifier).loadCheckInHistory();
+      context.read<TrackingBloc>().add(LoadCheckInHistoryEvent());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final trackingState = ref.watch(trackingNotifierProvider);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -37,86 +35,68 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Diario',
+          'Progreso',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            color: const Color(0xFFF5F5F5),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Calendario',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Color(0xFF6B8E7C),
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        'Progreso',
-                        style: TextStyle(
-                          color: Color(0xFF6B8E7C),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
-      body: _buildBody(trackingState),
+      body: BlocBuilder<TrackingBloc, TrackingState>(
+        builder: (context, state) {
+          return _buildBody(state);
+        },
+      ),
     );
   }
 
   Widget _buildBody(TrackingState state) {
-    if (state.isLoadingHistory || state.isLoading) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tu Progreso',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B8E7C),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildProgressContent(state),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressContent(TrackingState state) {
+    if (state is TrackingLoading || state is TrackingInitial) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF6B8E7C),
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(
+            color: Color(0xFF6B8E7C),
+          ),
         ),
       );
     }
 
-    if (state.error != null) {
+    if (state is TrackingError) {
       return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              state.error!,
+              state.message,
               style: const TextStyle(color: Colors.red),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                ref.read(trackingNotifierProvider.notifier).loadCheckInHistory();
+                context.read<TrackingBloc>().add(LoadCheckInHistoryEvent());
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6B8E7C),
@@ -128,29 +108,16 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       );
     }
 
-    final checkIns = state.checkInHistory?.checkIns ?? [];
-
-    if (checkIns.isEmpty) {
-      return const EmptyProgressState();
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    // Mostrar datos reales si están disponibles
+    if (state is TrackingLoaded && state.checkInHistory != null) {
+      final checkIns = state.checkInHistory!.checkIns;
+      final totalRecords = checkIns.length;
+      final averageLevel = totalRecords > 0 
+          ? _calculateAverage(checkIns.map((e) => e.emotionalLevel.toDouble()).toList())
+          : '0.0';
+      
+      return Column(
         children: [
-          const Text(
-            'Your Activity',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF6B8E7C),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Activity chart
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
@@ -158,13 +125,41 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: ActivityChart(checkIns: checkIns),
+              child: Column(
+                children: [
+                  const Text(
+                    'Actividad Reciente',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B8E7C),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        totalRecords > 0 
+                            ? 'Tienes $totalRecords registros\nde seguimiento emocional'
+                            : 'No hay registros aún\nComienza creando un check-in',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-
           const SizedBox(height: 24),
-
-          // Statistics
           const Text(
             'Estadísticas',
             style: TextStyle(
@@ -173,47 +168,112 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               color: Color(0xFF6B8E7C),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          StatisticsCard(
-            title: 'Total de registros',
-            value: checkIns.length.toString(),
-            icon: '📊',
-          ),
-
+          _buildStatCard('Total de registros', totalRecords.toString(), '📊'),
           const SizedBox(height: 12),
-
-          StatisticsCard(
-            title: 'Nivel emocional promedio',
-            value: _calculateAverage(
-              checkIns.map((e) => e.emotionalLevel.toDouble()).toList(),
-            ),
-            icon: '😊',
-          ),
-
-          const SizedBox(height: 12),
-
-          StatisticsCard(
-            title: 'Nivel de energía promedio',
-            value: _calculateAverage(
-              checkIns.map((e) => e.energyLevel.toDouble()).toList(),
-            ),
-            icon: '⚡',
-          ),
-
-          const SizedBox(height: 12),
-
-          StatisticsCard(
-            title: 'Horas de sueño promedio',
-            value: _calculateAverage(
-              checkIns.map((e) => e.sleepHours.toDouble()).toList(),
-            ),
-            icon: '😴',
-          ),
-
-          const SizedBox(height: 24),
+          _buildStatCard('Nivel emocional promedio', averageLevel, '😊'),
         ],
+      );
+    }
+    
+    // Contenido por defecto cuando no hay datos
+    return Column(
+      children: [
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Text(
+                  'Actividad Reciente',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF6B8E7C),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No hay registros aún\nComienza creando un check-in',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Estadísticas',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF6B8E7C),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildStatCard('Total de registros', '0', '📊'),
+        const SizedBox(height: 12),
+        _buildStatCard('Nivel emocional promedio', '0.0', '😊'),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, String icon) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Text(
+              icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B8E7C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -224,4 +284,4 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final average = sum / values.length;
     return average.toStringAsFixed(1);
   }
-}*/
+}

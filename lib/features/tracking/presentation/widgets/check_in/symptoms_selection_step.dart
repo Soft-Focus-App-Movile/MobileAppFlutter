@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class SymptomsSelectionStep extends StatelessWidget {
+class SymptomsSelectionStep extends StatefulWidget {
   final List<String> selectedSymptoms;
   final Function(List<String>) onSymptomsSelected;
   final VoidCallback onNext;
@@ -12,7 +12,14 @@ class SymptomsSelectionStep extends StatelessWidget {
     required this.onNext,
   }) : super(key: key);
 
-  static const List<String> _symptoms = [
+  @override
+  State<SymptomsSelectionStep> createState() => _SymptomsSelectionStepState();
+}
+
+class _SymptomsSelectionStepState extends State<SymptomsSelectionStep> {
+  bool _showPositiveSymptoms = false;
+
+  static const List<String> _negativeSymptoms = [
     'Ansiedad',
     'Tristeza',
     'Estrés',
@@ -23,14 +30,52 @@ class SymptomsSelectionStep extends StatelessWidget {
     'Dificultad para concentrarse',
   ];
 
+  static const List<String> _positiveSymptoms = [
+    'Energía',
+    'Motivación',
+    'Tranquilidad',
+    'Alegría',
+    'Concentración',
+    'Optimismo',
+    'Buen apetito',
+    'Sueño reparador',
+  ];
+
+  List<String> get _currentSymptoms => _showPositiveSymptoms ? _positiveSymptoms : _negativeSymptoms;
+
   void _toggleSymptom(String symptom) {
-    final newSelection = List<String>.from(selectedSymptoms);
+    final newSelection = List<String>.from(widget.selectedSymptoms);
     if (newSelection.contains(symptom)) {
       newSelection.remove(symptom);
     } else {
       newSelection.add(symptom);
     }
-    onSymptomsSelected(newSelection);
+    widget.onSymptomsSelected(newSelection);
+  }
+
+  Widget _buildToggleButton(String text, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showPositiveSymptoms = text == 'Positivos';
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? const Color(0xFF6B8E7C) : Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -38,14 +83,32 @@ class SymptomsSelectionStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          '¿Experimentaste alguno de estos síntomas?',
-          style: TextStyle(
+        Text(
+          _showPositiveSymptoms 
+              ? '¿Experimentaste alguno de estos aspectos positivos?'
+              : '¿Experimentaste alguno de estos síntomas?',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        
+        // Toggle between negative and positive symptoms
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildToggleButton('Síntomas', !_showPositiveSymptoms),
+              _buildToggleButton('Positivos', _showPositiveSymptoms),
+            ],
+          ),
         ),
         const SizedBox(height: 32),
         
@@ -54,8 +117,8 @@ class SymptomsSelectionStep extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           alignment: WrapAlignment.center,
-          children: _symptoms.map((symptom) {
-            final isSelected = selectedSymptoms.contains(symptom);
+          children: _currentSymptoms.map((symptom) {
+            final isSelected = widget.selectedSymptoms.contains(symptom);
             return Material(
               color: Colors.transparent,
               child: InkWell(
@@ -97,7 +160,7 @@ class SymptomsSelectionStep extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: onNext,
+            onPressed: widget.onNext,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF6B8E7C),
