@@ -14,7 +14,7 @@ enum EmotionalTag {
       case EmotionalTag.calm:
         return 'Tranquilo';
       case EmotionalTag.energetic:
-        return 'En�rgico';
+        return 'Enérgico';
     }
   }
 
@@ -63,7 +63,7 @@ class FilterBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Filtrar por emoci�n',
+            'Filtrar por emoción',
             style: sourceSansSemiBold.copyWith(
               fontSize: 14,
               color: green29,

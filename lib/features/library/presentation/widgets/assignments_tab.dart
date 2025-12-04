@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/common/status.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
@@ -135,13 +136,29 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ContentDetailPage(content: content),
-            ),
-          );
+        onTap: () async {
+          if (content.isMusic) {
+            final musicUrl = content.spotifyUrl ?? content.externalUrl;
+            if (musicUrl != null) {
+              final uri = Uri.parse(musicUrl);
+              if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No se pudo abrir Spotify')),
+                  );
+                }
+              }
+            }
+          } else {
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ContentDetailPage(content: content),
+                ),
+              );
+            }
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -152,7 +169,7 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
-                  imageUrl: content.displayImage,
+                  imageUrl: content.posterImage,
                   width: 100,
                   height: 140,
                   fit: BoxFit.cover,
@@ -264,14 +281,30 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        ContentDetailPage(content: content),
-                                  ),
-                                );
+                              onPressed: () async {
+                                if (content.isMusic) {
+                                  final musicUrl = content.spotifyUrl ?? content.externalUrl;
+                                  if (musicUrl != null) {
+                                    final uri = Uri.parse(musicUrl);
+                                    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('No se pudo abrir Spotify')),
+                                        );
+                                      }
+                                    }
+                                  }
+                                } else {
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ContentDetailPage(content: content),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: green65,

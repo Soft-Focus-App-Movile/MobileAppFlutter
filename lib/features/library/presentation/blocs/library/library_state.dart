@@ -4,7 +4,7 @@ import '../../../domain/models/content_ui.dart';
 class LibraryState {
   final Status status;
   final String selectedType;
-  final String? selectedEmotion;
+  final Map<String, String?> selectedEmotionByType;
   final List<ContentUi> contents;
   final String? message;
   final int currentPage;
@@ -14,7 +14,7 @@ class LibraryState {
   const LibraryState({
     this.status = Status.initial,
     this.selectedType = 'movie',
-    this.selectedEmotion,
+    this.selectedEmotionByType = const {'movie': null, 'music': null, 'video': null},
     this.contents = const [],
     this.message,
     this.currentPage = 1,
@@ -22,10 +22,12 @@ class LibraryState {
     this.hasMorePages = false,
   });
 
+  String? get selectedEmotion => selectedEmotionByType[selectedType];
+
   LibraryState copyWith({
     Status? status,
     String? selectedType,
-    String? selectedEmotion,
+    Map<String, String?>? selectedEmotionByType,
     List<ContentUi>? contents,
     String? message,
     int? currentPage,
@@ -35,7 +37,7 @@ class LibraryState {
     return LibraryState(
       status: status ?? this.status,
       selectedType: selectedType ?? this.selectedType,
-      selectedEmotion: selectedEmotion ?? this.selectedEmotion,
+      selectedEmotionByType: selectedEmotionByType ?? this.selectedEmotionByType,
       contents: contents ?? this.contents,
       message: message ?? this.message,
       currentPage: currentPage ?? this.currentPage,

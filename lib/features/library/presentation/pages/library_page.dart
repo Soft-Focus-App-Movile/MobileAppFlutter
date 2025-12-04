@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/common/status.dart';
 import '../../../../core/networking/http_client.dart';
@@ -36,11 +38,18 @@ class _LibraryPageState extends State<LibraryPage> {
   ContentType _selectedType = ContentType.movie;
   String _searchQuery = '';
   HttpClient? _httpClient;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUserType();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUserType() async {
@@ -118,8 +127,14 @@ class _LibraryPageState extends State<LibraryPage> {
                   onContentTypeSelected: (type) {
                     setState(() {
                       _selectedType = type;
+                      _searchQuery = '';
                     });
-                    context.read<LibraryBloc>().add(SearchContent(type: type.name));
+                    final libraryBloc = context.read<LibraryBloc>();
+                    final emotionForType = libraryBloc.state.selectedEmotionByType[type.name];
+                    libraryBloc.add(SearchContent(
+                      type: type.name,
+                      emotion: emotionForType,
+                    ));
                   },
                 ),
                 if (_currentTab == 'content' &&
@@ -130,15 +145,29 @@ class _LibraryPageState extends State<LibraryPage> {
                       setState(() {
                         _searchQuery = query;
                       });
-                      if (query.isEmpty) {
-                        context.read<LibraryBloc>().add(
-                              SearchContent(type: _selectedType.name),
-                            );
-                      } else {
-                        context.read<LibraryBloc>().add(
-                              SearchContent(type: _selectedType.name, query: query),
-                            );
-                      }
+
+                      _debounceTimer?.cancel();
+                      _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                        final libraryBloc = context.read<LibraryBloc>();
+                        final emotionForType = libraryBloc.state.selectedEmotionByType[_selectedType.name];
+
+                        if (query.isEmpty) {
+                          libraryBloc.add(
+                            SearchContent(
+                              type: _selectedType.name,
+                              emotion: emotionForType,
+                            ),
+                          );
+                        } else {
+                          libraryBloc.add(
+                            SearchContent(
+                              type: _selectedType.name,
+                              query: query,
+                              emotion: emotionForType,
+                            ),
+                          );
+                        }
+                      });
                     },
                     onFilterClick: () {
                       final libraryBloc = context.read<LibraryBloc>();
@@ -248,15 +277,33 @@ class _LibraryPageState extends State<LibraryPage> {
                             ToggleFavorite(content: contentUi.content),
                           );
                     },
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ContentDetailPage(
-                            content: contentUi.content,
-                          ),
-                        ),
-                      );
+                    onTap: () async {
+                      final content = contentUi.content;
+
+                      if (content.isMusic) {
+                        final musicUrl = content.spotifyUrl ?? content.externalUrl;
+                        if (musicUrl != null) {
+                          final uri = Uri.parse(musicUrl);
+                          if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('No se pudo abrir Spotify')),
+                              );
+                            }
+                          }
+                        }
+                      } else {
+                        if (context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ContentDetailPage(
+                                content: content,
+                              ),
+                            ),
+                          );
+                        }
+                      }
                     },
                     onLongPress: () {},
                   );

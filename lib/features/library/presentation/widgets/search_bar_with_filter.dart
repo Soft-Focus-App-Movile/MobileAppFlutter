@@ -23,7 +23,7 @@ class SearchBarWithFilter extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: gray2C,
+                color: greenF2,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
@@ -45,7 +45,7 @@ class SearchBarWithFilter extends StatelessWidget {
           const SizedBox(width: 12),
           Container(
             decoration: BoxDecoration(
-              color: gray2C,
+              color: green49,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(

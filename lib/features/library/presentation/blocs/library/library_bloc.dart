@@ -28,11 +28,14 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     SearchContent event,
     Emitter<LibraryState> emit,
   ) async {
+    final updatedEmotionByType = Map<String, String?>.from(state.selectedEmotionByType);
+    updatedEmotionByType[event.type] = event.emotion;
+
     if (event.page == 1) {
       emit(state.copyWith(
         status: Status.loading,
         selectedType: event.type,
-        selectedEmotion: event.emotion,
+        selectedEmotionByType: updatedEmotionByType,
       ));
     }
 

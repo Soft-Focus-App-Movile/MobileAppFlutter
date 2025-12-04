@@ -49,7 +49,9 @@ class Content {
   bool get isMusic => type == 'music';
   bool get isVideo => type == 'video';
 
-  String get displayImage => posterUrl ?? thumbnailUrl ?? backdropUrl ?? '';
+  String get posterImage => posterUrl ?? thumbnailUrl ?? backdropUrl ?? '';
+
+  String get backdropImage => backdropUrl ?? posterUrl ?? thumbnailUrl ?? '';
 
   String get displaySubtitle {
     if (isMusic && artist != null) return artist!;

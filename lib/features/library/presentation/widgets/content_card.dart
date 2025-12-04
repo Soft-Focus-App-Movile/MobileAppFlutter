@@ -40,7 +40,7 @@ class ContentCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: CachedNetworkImage(
-                    imageUrl: content.displayImage,
+                    imageUrl: content.posterImage,
                     width: 160,
                     height: 180,
                     fit: BoxFit.cover,
