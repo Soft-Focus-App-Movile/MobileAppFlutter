@@ -19,10 +19,6 @@ class PatientListPage extends StatelessWidget {
         backgroundColor: white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: black),
-          onPressed: () => context.pop(),
-        ),
         title: Text(
           'Pacientes',
           style: crimsonSemiBold.copyWith(

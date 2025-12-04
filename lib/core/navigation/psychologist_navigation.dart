@@ -11,6 +11,7 @@ import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
 import '../../features/therapy/data/services/therapy_service.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../core/networking/http_client.dart';
+import '../../core/ui/components/navigation/psychologist_bottom_nav.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
