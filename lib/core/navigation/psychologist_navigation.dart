@@ -12,6 +12,20 @@ import '../../features/therapy/data/services/therapy_service.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../core/networking/http_client.dart';
 import '../../core/ui/components/navigation/psychologist_bottom_nav.dart';
+import '../../features/profiles/presentation/pages/psychologist/my_invitation_code_page.dart';
+import '../../features/profiles/presentation/pages/psychologist/edit_personal_info_page.dart';
+import '../../features/profiles/presentation/pages/psychologist/professional_data_page.dart';
+import '../../features/profiles/presentation/pages/psychologist/psychologist_stats_page.dart';
+import '../../features/profiles/presentation/blocs/psychologist_profile/psychologist_profile_bloc.dart';
+import '../../features/profiles/presentation/blocs/psychologist_profile/psychologist_profile_event.dart';
+import '../../features/profiles/data/repositories/profile_repository_impl.dart';
+import '../../features/profiles/data/remote/profile_service.dart';
+import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
+import '../../features/therapy/data/services/therapy_service.dart';
+import '../../features/psychologist/data/remote/psychologist_service.dart';
+import '../../features/psychologist/data/repositories/psychologist_repository_impl.dart';
+import '../../features/auth/data/local/user_session.dart';
+import '../../core/networking/http_client.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -30,7 +44,7 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.psychologistProfile.path,
       name: 'psychologist_profile',
       builder: (context, state) {
-        // TODO: Profile team - Implement PsychologistProfilePage
+        // TODO: Profile team - Implement PsychologistProfilePage with BLoC
         return Scaffold(
           appBar: AppBar(title: const Text('Mi Perfil Profesional')),
           body: const Center(
@@ -45,12 +59,38 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.psychologistEditProfile.path,
       name: 'psychologist_edit_profile',
       builder: (context, state) {
-        // TODO: Profile team - Implement PsychologistEditProfilePage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Editar Perfil Profesional')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar PsychologistEditProfilePage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final profileService = ProfileService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+            final profileRepository = ProfileRepositoryImpl(
+              service: profileService,
+              therapyRepository: therapyRepository,
+              userSession: userSession,
+            );
+
+            return BlocProvider(
+              create: (context) => PsychologistProfileBloc(
+                profileRepository: profileRepository,
+                userSession: userSession,
+              )..add(LoadPsychologistProfile()),
+              child: EditPersonalInfoPage(
+                onNavigateBack: () => context.pop(),
+              ),
+            );
+          },
         );
       },
     ),
@@ -60,12 +100,38 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.professionalData.path,
       name: 'professional_data',
       builder: (context, state) {
-        // TODO: Profile team - Implement ProfessionalDataPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Datos Profesionales')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar ProfessionalDataPage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final profileService = ProfileService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+            final profileRepository = ProfileRepositoryImpl(
+              service: profileService,
+              therapyRepository: therapyRepository,
+              userSession: userSession,
+            );
+
+            return BlocProvider(
+              create: (context) => PsychologistProfileBloc(
+                profileRepository: profileRepository,
+                userSession: userSession,
+              )..add(LoadPsychologistProfile()),
+              child: ProfessionalDataPage(
+                onNavigateBack: () => context.pop(),
+              ),
+            );
+          },
         );
       },
     ),
@@ -75,12 +141,68 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.invitationCode.path,
       name: 'invitation_code',
       builder: (context, state) {
-        // TODO: Psychologist team - Implement InvitationCodePage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Código de Invitación')),
-          body: const Center(
-            child: Text('TODO: Psychologist team - Implementar InvitationCodePage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final psychologistService = PsychologistService(httpClient: httpClient);
+            final psychologistRepository = PsychologistRepositoryImpl(
+              psychologistService: psychologistService,
+            );
+
+            return FutureBuilder(
+              future: psychologistRepository.getInvitationCode(),
+              builder: (context, codeSnapshot) {
+                if (codeSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (codeSnapshot.hasError) {
+                  return Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Mi código de invitación'),
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => context.pop(),
+                      ),
+                    ),
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text('Error: ${codeSnapshot.error}'),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => context.pop(),
+                            child: const Text('Volver'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final invitationCode = codeSnapshot.data;
+                return MyInvitationCodePage(
+                  onNavigateBack: () => context.pop(),
+                  invitationCode: invitationCode?.code ?? 'N/A',
+                );
+              },
+            );
+          },
         );
       },
     ),
@@ -105,12 +227,38 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.psychologistStats.path,
       name: 'psychologist_stats',
       builder: (context, state) {
-        // TODO: Analytics team - Implement PsychologistStatsPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mis Estadísticas')),
-          body: const Center(
-            child: Text('TODO: Analytics team - Implementar PsychologistStatsPage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final profileService = ProfileService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+            final profileRepository = ProfileRepositoryImpl(
+              service: profileService,
+              therapyRepository: therapyRepository,
+              userSession: userSession,
+            );
+
+            return BlocProvider(
+              create: (context) => PsychologistProfileBloc(
+                profileRepository: profileRepository,
+                userSession: userSession,
+              )..add(LoadPsychologistProfile()),
+              child: PsychologistStatsPage(
+                onNavigateBack: () => context.pop(),
+              ),
+            );
+          },
         );
       },
     ),

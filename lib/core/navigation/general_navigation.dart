@@ -37,25 +37,39 @@ List<RouteBase> generalRoutes() {
       path: AppRoute.connectPsychologist.path,
       name: 'connect_psychologist',
       builder: (context, state) {
-        final httpClient = HttpClient();
-        final therapyService = TherapyService(httpClient: httpClient);
-        final therapyRepository = TherapyRepositoryImpl(
-          service: therapyService,
-        );
+        final userSession = UserSession();
 
-        return BlocProvider(
-          create: (context) => ConnectPsychologistBloc(
-            therapyRepository: therapyRepository,
-          ),
-          child: ConnectPsychologistPage(
-            onNavigateBack: () => context.pop(),
-            onConnectionSuccess: () {
-              context.pop();
-            },
-            onSearchPsychologists: () {
-              context.push(AppRoute.searchPsychologist.path);
-            },
-          ),
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(
+              service: therapyService,
+            );
+
+            return BlocProvider(
+              create: (context) => ConnectPsychologistBloc(
+                therapyRepository: therapyRepository,
+              ),
+              child: ConnectPsychologistPage(
+                onNavigateBack: () => context.pop(),
+                onConnectionSuccess: () {
+                  context.pop();
+                },
+                onSearchPsychologists: () {
+                  context.push(AppRoute.searchPsychologist.path);
+                },
+              ),
+            );
+          },
         );
       },
     ),
@@ -65,28 +79,41 @@ List<RouteBase> generalRoutes() {
       path: AppRoute.editProfile.path,
       name: 'edit_profile',
       builder: (context, state) {
-        final httpClient = HttpClient();
         final userSession = UserSession();
-        final profileService = ProfileService(httpClient: httpClient);
-        final therapyService = TherapyService(httpClient: httpClient);
-        final therapyRepository = TherapyRepositoryImpl(
-          service: therapyService,
-        );
-        final profileRepository = ProfileRepositoryImpl(
-          service: profileService,
-          therapyRepository: therapyRepository,
-          userSession: userSession,
-        );
 
-        return BlocProvider(
-          create: (context) => ProfileBloc(
-            profileRepository: profileRepository,
-            therapyRepository: therapyRepository,
-            userSession: userSession,
-          )..add(LoadProfile()),
-          child: EditProfilePage(
-            onNavigateBack: () => context.pop(),
-          ),
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final profileService = ProfileService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(
+              service: therapyService,
+            );
+            final profileRepository = ProfileRepositoryImpl(
+              service: profileService,
+              therapyRepository: therapyRepository,
+              userSession: userSession,
+            );
+
+            return BlocProvider(
+              create: (context) => ProfileBloc(
+                profileRepository: profileRepository,
+                therapyRepository: therapyRepository,
+                userSession: userSession,
+              )..add(LoadProfile()),
+              child: EditProfilePage(
+                onNavigateBack: () => context.pop(),
+              ),
+            );
+          },
         );
       },
     ),

@@ -14,7 +14,7 @@ import '../../features/auth/data/local/user_session.dart';
 import '../../features/auth/domain/models/user_type.dart';
 import '../../core/ui/components/navigation/general_scaffold.dart';
 import '../../core/ui/components/navigation/patient_bottom_nav.dart';
-import '../../core/ui/components/navigation/psychologist_bottom_nav.dart';
+import '../../core/ui/components/navigation/psychologist_scaffold.dart';
 import 'route.dart';
 
 /// Shared navigation graph.
@@ -42,10 +42,7 @@ List<RouteBase> sharedRoutes() {
 
             // PSYCHOLOGIST users
             if (currentUser?.userType == UserType.PSYCHOLOGIST) {
-              return Scaffold(
-                bottomNavigationBar: const PsychologistBottomNav(),
-                body: const PsychologistHomePage(),
-              );
+              return const PsychologistScaffold();
             }
 
             // GENERAL and PATIENT users

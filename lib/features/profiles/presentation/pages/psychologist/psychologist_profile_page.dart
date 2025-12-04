@@ -5,7 +5,6 @@ import '../../../../../core/ui/text_styles.dart';
 import '../../../../../core/widgets/profile_avatar.dart';
 import '../../blocs/psychologist_profile/psychologist_profile_bloc.dart';
 import '../../blocs/psychologist_profile/psychologist_profile_state.dart';
-import 'package:intl/intl.dart';
 
 class PsychologistProfilePage extends StatelessWidget {
   final VoidCallback onNavigateToEditProfile;
@@ -44,87 +43,81 @@ class PsychologistProfilePage extends StatelessWidget {
       ),
       body: BlocBuilder<PsychologistProfileBloc, PsychologistProfileState>(
         builder: (context, state) {
-          if (state is PsychologistProfileLoading && state.profile == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is PsychologistProfileError && state.profile == null) {
-            return Center(
-              child: Text(
-                state.message,
-                style: sourceSansRegular.copyWith(color: Colors.red),
-              ),
-            );
-          }
-
           final profile = state.profile;
-          if (profile == null) {
-            return const Center(child: Text('No profile data'));
-          }
+          final isLoading = state is PsychologistProfileLoading && profile == null;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
                 const SizedBox(height: 24),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ProfileAvatar(
-                      imageUrl: profile.profileImageUrl,
-                      fullName: profile.fullName,
-                      size: 120,
-                      fontSize: 48,
-                      backgroundColor: greenA3,
-                      textColor: white,
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(),
                     ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            profile.fullName,
-                            style: crimsonSemiBold.copyWith(
-                              fontSize: profile.fullName.length > 20 ? 20 : 28,
-                              color: black,
-                              height: 1.0,
-                            ),
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 8),
-                          if (profile.dateOfBirth != null) ...[
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ProfileAvatar(
+                        imageUrl: profile?.profileImageUrl,
+                        fullName: profile?.fullName ?? 'Usuario',
+                        size: 120,
+                        fontSize: 48,
+                        backgroundColor: greenA3,
+                        textColor: white,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              '${_calculateAge(profile.dateOfBirth!)} años',
+                              profile?.fullName ?? 'Usuario',
+                              style: crimsonSemiBold.copyWith(
+                                fontSize: (profile?.fullName.length ?? 0) > 20 ? 20 : 28,
+                                color: black,
+                                height: 1.0,
+                              ),
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 8),
+                            if (profile?.dateOfBirth != null) ...[
+                              Text(
+                                '${_calculateAge(profile!.dateOfBirth!)} años',
+                                style: crimsonSemiBold.copyWith(
+                                  fontSize: 18,
+                                  color: black,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            Text(
+                              profile?.email ?? '',
                               style: crimsonSemiBold.copyWith(
                                 fontSize: 18,
                                 color: black,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
+                            if (profile != null && profile.specialties.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: profile.specialties.take(2).map((specialty) {
+                                  return _Badge(text: specialty);
+                                }).toList(),
+                              ),
                           ],
-                          Text(
-                            profile.email,
-                            style: crimsonSemiBold.copyWith(
-                              fontSize: 18,
-                              color: black,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: profile.specialties.take(2).map((specialty) {
-                              return _Badge(text: specialty);
-                            }).toList(),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 const SizedBox(height: 24),
                 _MenuOption(
                   icon: Icons.edit_outlined,
