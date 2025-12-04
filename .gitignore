@@ -134,7 +134,7 @@ coverage/
 *credentials*
 google-services.json
 GoogleService-Info.plist
-firebase_options.dart
+
 
 # Si utilizas otro archivo de secretos, agrégalo aquí.
 # DevTools configuration (local development only)
