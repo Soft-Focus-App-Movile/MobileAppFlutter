@@ -93,7 +93,7 @@ class _ProfessionalDataPageState extends State<ProfessionalDataPage> {
                         // License Number
                         _buildInfoField(
                           label: 'Número de licencia',
-                          value: profile.licenseNumber,
+                          value: profile.licenseNumber ?? 'No especificado',
                         ),
                         const SizedBox(height: 16),
 
@@ -107,8 +107,8 @@ class _ProfessionalDataPageState extends State<ProfessionalDataPage> {
                         // Specialties
                         _buildInfoField(
                           label: 'Especialidades',
-                          value: profile.specialties.isNotEmpty
-                              ? profile.specialties.join(', ')
+                          value: (profile.specialties?.isNotEmpty ?? false)
+                              ? profile.specialties!.join(', ')
                               : 'No especificadas',
                         ),
                         const SizedBox(height: 16),
@@ -116,7 +116,7 @@ class _ProfessionalDataPageState extends State<ProfessionalDataPage> {
                         // Years of Experience
                         _buildInfoField(
                           label: 'Años de experiencia',
-                          value: '${profile.yearsOfExperience} años',
+                          value: '${profile.yearsOfExperience ?? 0} años',
                         ),
                       ],
                     ),

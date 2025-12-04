@@ -4,7 +4,7 @@ class PsychologistProfile {
   final String fullName;
   final String? firstName;
   final String? lastName;
-  final String userType;
+  final String? userType;
   final String? dateOfBirth;
   final String? gender;
   final String? phone;
@@ -22,11 +22,11 @@ class PsychologistProfile {
   final String? createdAt;
   final String? updatedAt;
 
-  final String licenseNumber;
-  final String professionalCollege;
+  final String? licenseNumber;
+  final String? professionalCollege;
   final String? collegeRegion;
-  final List<String> specialties;
-  final int yearsOfExperience;
+  final List<String>? specialties;
+  final int? yearsOfExperience;
   final String? university;
   final int? graduationYear;
   final String? degree;
@@ -61,7 +61,7 @@ class PsychologistProfile {
     required this.fullName,
     this.firstName,
     this.lastName,
-    required this.userType,
+    this.userType,
     this.dateOfBirth,
     this.gender,
     this.phone,
@@ -78,11 +78,11 @@ class PsychologistProfile {
     this.lastLogin,
     this.createdAt,
     this.updatedAt,
-    required this.licenseNumber,
-    required this.professionalCollege,
+    this.licenseNumber,
+    this.professionalCollege,
     this.collegeRegion,
-    required this.specialties,
-    required this.yearsOfExperience,
+    this.specialties,
+    this.yearsOfExperience,
     this.university,
     this.graduationYear,
     this.degree,

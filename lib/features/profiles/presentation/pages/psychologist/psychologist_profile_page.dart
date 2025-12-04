@@ -105,11 +105,11 @@ class PsychologistProfilePage extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
-                            if (profile != null && profile.specialties.isNotEmpty)
+                            if (profile != null && (profile.specialties?.isNotEmpty ?? false))
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 4,
-                                children: profile.specialties.take(2).map((specialty) {
+                                children: profile.specialties!.take(2).map((specialty) {
                                   return _Badge(text: specialty);
                                 }).toList(),
                               ),

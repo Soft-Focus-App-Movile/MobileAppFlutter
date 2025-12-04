@@ -53,8 +53,11 @@ class ProfileService {
     final response = await _httpClient
         .get(UsersEndpoints.getPsychologistDetail(psychologistId));
     if (response.statusCode == 200) {
-      return PsychologistCompleteProfileResponseDto.fromJson(
-          jsonDecode(response.body));
+      print('🔍 Raw JSON response from getPsychologistById:');
+      print(response.body);
+      final jsonData = jsonDecode(response.body);
+      print('🔍 Decoded JSON keys: ${jsonData.keys}');
+      return PsychologistCompleteProfileResponseDto.fromJson(jsonData);
     } else {
       throw Exception('Error al obtener psicólogo: ${response.body}');
     }

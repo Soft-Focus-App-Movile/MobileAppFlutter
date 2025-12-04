@@ -1,5 +1,6 @@
 import '../../features/auth/data/local/user_session.dart';
 import '../../features/auth/domain/models/user.dart';
+import '../data/local/local_user_data_source.dart';
 
 /// Utility class to manage user sessions.
 /// Handles login persistence and logout cleanup.
@@ -10,6 +11,7 @@ class SessionManager {
   static SessionManager get instance => _instance;
 
   final UserSession _userSession = UserSession();
+  final LocalUserDataSource _localUserDataSource = LocalUserDataSource();
 
   /// Clears all user session data from local storage.
   /// This should be called when user explicitly logs out or session expires.
@@ -17,9 +19,8 @@ class SessionManager {
     // Clear UserSession (user info, token, etc.)
     await _userSession.clear();
 
-    // TODO: Clear LocalUserDataSource (therapeutic relationship status)
-    // final localUserDataSource = LocalUserDataSource();
-    // await localUserDataSource.clear();
+    // Clear LocalUserDataSource (therapeutic relationship status)
+    await _localUserDataSource.clear();
 
     // TODO: Clear auth tokens from presentation modules
     // AdminPresentationModule.clearAuthToken();

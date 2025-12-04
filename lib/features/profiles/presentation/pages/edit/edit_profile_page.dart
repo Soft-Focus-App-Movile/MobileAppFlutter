@@ -58,6 +58,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     'Desarrollo personal'
   ];
 
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +70,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _initializeFields(dynamic user) {
+    if (_isInitialized) return;
+
     _initialFirstName = user.firstName ?? '';
     _initialLastName = user.lastName ?? '';
     _initialBio = user.bio ?? '';
@@ -89,6 +93,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _phoneController.text = _initialPhone;
     _selectedInterests = Set.from(_initialInterests);
     _selectedGoals = Set.from(_initialGoals);
+    _isInitialized = true;
+
+    setState(() {});
   }
 
   String _mapGenderToBackend(String gender) {
@@ -169,7 +176,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
-          if (state is ProfileUpdateSuccess) {
+          if (state is ProfileSuccess && state.user != null && !_isInitialized) {
+            _initializeFields(state.user!);
+          } else if (state is ProfileUpdateSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Perfil actualizado correctamente ✓'),

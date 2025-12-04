@@ -19,8 +19,12 @@ import '../../features/library/presentation/pages/library_page.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../features/auth/domain/models/user_type.dart';
 import '../../core/ui/components/navigation/general_scaffold.dart';
-import '../../core/ui/components/navigation/patient_bottom_nav.dart';
+import '../../core/ui/components/navigation/patient_scaffold.dart';
 import '../../core/ui/components/navigation/psychologist_scaffold.dart';
+import '../../core/data/local/local_user_data_source.dart';
+import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
+import '../../features/therapy/data/services/therapy_service.dart';
+import '../../core/networking/http_client.dart';
 import 'route.dart';
 
 final sl = GetIt.instance;
@@ -55,27 +59,31 @@ List<RouteBase> sharedRoutes() {
             // GENERAL and PATIENT users
             if (currentUser?.userType == UserType.GENERAL ||
                 currentUser?.userType == UserType.PATIENT) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.read<HomeBloc>().add(const CheckPatientStatusRequested());
-              });
+              final httpClient = HttpClient(token: currentUser?.token);
+              final therapyService = TherapyService(httpClient: httpClient);
+              final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+              final localUserDataSource = LocalUserDataSource();
 
-              return BlocBuilder<HomeBloc, HomeState>(
-                builder: (context, homeState) {
-                  if (homeState.isLoading) {
-                    return const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    );
-                  }
+              return BlocProvider(
+                create: (context) => HomeBloc(
+                  therapyRepository: therapyRepository,
+                  localUserDataSource: localUserDataSource,
+                )..add(const CheckPatientStatusRequested()),
+                child: BlocBuilder<HomeBloc, HomeState>(
+                  builder: (context, homeState) {
+                    if (homeState.isLoading) {
+                      return const Scaffold(
+                        body: Center(child: CircularProgressIndicator()),
+                      );
+                    }
 
-                  if (homeState.isPatient) {
-                    return Scaffold(
-                      bottomNavigationBar: const PatientBottomNav(),
-                      body: const PatientHomePage(),
-                    );
-                  }
+                    if (homeState.isPatient) {
+                      return const PatientScaffold();
+                    }
 
-                  return const GeneralScaffold();
-                },
+                    return const GeneralScaffold();
+                  },
+                ),
               );
             }
 

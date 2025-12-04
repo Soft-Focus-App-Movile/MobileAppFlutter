@@ -14,7 +14,7 @@ _$PsychologistCompleteProfileResponseDtoFromJson(Map<String, dynamic> json) =>
       fullName: json['fullName'] as String,
       firstName: json['firstName'] as String?,
       lastName: json['lastName'] as String?,
-      userType: json['userType'] as String,
+      userType: json['userType'] as String?,
       dateOfBirth: json['dateOfBirth'] as String?,
       gender: json['gender'] as String?,
       phone: json['phone'] as String?,
@@ -35,13 +35,13 @@ _$PsychologistCompleteProfileResponseDtoFromJson(Map<String, dynamic> json) =>
       lastLogin: json['lastLogin'] as String?,
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,
-      licenseNumber: json['licenseNumber'] as String,
-      professionalCollege: json['professionalCollege'] as String,
+      licenseNumber: json['licenseNumber'] as String?,
+      professionalCollege: json['professionalCollege'] as String?,
       collegeRegion: json['collegeRegion'] as String?,
-      specialties: (json['specialties'] as List<dynamic>)
-          .map((e) => e as String)
+      specialties: (json['specialties'] as List<dynamic>?)
+          ?.map((e) => e as String)
           .toList(),
-      yearsOfExperience: (json['yearsOfExperience'] as num).toInt(),
+      yearsOfExperience: (json['yearsOfExperience'] as num?)?.toInt(),
       university: json['university'] as String?,
       graduationYear: (json['graduationYear'] as num?)?.toInt(),
       degree: json['degree'] as String?,

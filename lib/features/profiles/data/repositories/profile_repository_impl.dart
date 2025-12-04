@@ -54,13 +54,41 @@ class ProfileRepositoryImpl implements ProfileRepository {
     try {
       final relationshipResult = await _therapyRepository.getMyRelationship();
 
+      print('🔍 getAssignedPsychologist - relationshipResult type: ${relationshipResult.runtimeType}');
+
       if (relationshipResult is Success) {
         final relationship = (relationshipResult as Success<TherapeuticRelationship?>).data;
 
+        print('🔍 relationship: $relationship');
+        print('🔍 relationship?.isActive: ${relationship?.isActive}');
+
         if (relationship != null && relationship.isActive) {
           final psychologistId = relationship.psychologistId;
-          final psychologistProfile =
+          print('🔍 psychologistId: $psychologistId');
+
+          print('🔍 About to fetch psychologist by ID...');
+          final psychologistProfileDto =
               await _profileService.getPsychologistById(psychologistId);
+
+          print('🔍 psychologistProfileDto obtained: ${psychologistProfileDto.id}');
+          print('🔍 DTO fields check:');
+          print('  - fullName: ${psychologistProfileDto.fullName}');
+          print('  - email: ${psychologistProfileDto.email}');
+          print('  - userType: ${psychologistProfileDto.userType}');
+          print('  - licenseNumber: ${psychologistProfileDto.licenseNumber}');
+          print('  - professionalCollege: ${psychologistProfileDto.professionalCollege}');
+          print('  - specialties: ${psychologistProfileDto.specialties}');
+          print('  - yearsOfExperience: ${psychologistProfileDto.yearsOfExperience}');
+          print('🔍 Converting DTO to domain...');
+
+          final psychologistProfile = psychologistProfileDto.toDomain();
+
+          print('🔍 psychologistProfile converted successfully');
+          print('🔍 id: ${psychologistProfile.id}');
+          print('🔍 fullName: ${psychologistProfile.fullName}');
+          print('🔍 profileImageUrl: ${psychologistProfile.profileImageUrl}');
+          print('🔍 professionalBio: ${psychologistProfile.professionalBio}');
+          print('🔍 specialties: ${psychologistProfile.specialties}');
 
           final assignedPsychologist = AssignedPsychologist(
             id: psychologistProfile.id,
@@ -69,14 +97,19 @@ class ProfileRepositoryImpl implements ProfileRepository {
             professionalBio: psychologistProfile.professionalBio,
             specialties: psychologistProfile.specialties,
           );
+
+          print('✅ assignedPsychologist created: ${assignedPsychologist.fullName}');
           return assignedPsychologist;
         } else {
+          print('❌ No active relationship found');
           return null;
         }
       } else {
+        print('❌ relationshipResult is not Success');
         return null;
       }
     } catch (e) {
+      print('❌ ERROR in getAssignedPsychologist: $e');
       return null;
     }
   }

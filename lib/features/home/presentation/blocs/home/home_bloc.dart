@@ -1,11 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/data/local/local_user_data_source.dart';
+import '../../../../../core/common/result.dart';
+import '../../../../therapy/domain/repositories/therapy_repository.dart';
 import 'home_event.dart';
 import 'home_state.dart';
 
 /// BLoC for managing home screen state
 /// Handles checking if GENERAL user has psychologist relationship (becomes "patient")
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  HomeBloc() : super(const HomeState()) {
+  final TherapyRepository _therapyRepository;
+  final LocalUserDataSource _localUserDataSource;
+
+  HomeBloc({
+    required TherapyRepository therapyRepository,
+    required LocalUserDataSource localUserDataSource,
+  })  : _therapyRepository = therapyRepository,
+        _localUserDataSource = localUserDataSource,
+        super(const HomeState()) {
     on<CheckPatientStatusRequested>(_onCheckPatientStatus);
     on<LoadHomeData>(_onLoadHomeData);
   }
@@ -21,22 +32,35 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoading: true));
 
     try {
-      // TODO: Therapy team - Implement getMyRelationship API call
-      // For now, default to false (user is GENERAL without psychologist)
-      //
-      // Implementation should:
-      // 1. Check localUserDataSource.hasTherapeuticRelationship()
-      // 2. If cached, use cached value
-      // 3. If not cached, call getMyRelationshipUseCase()
-      // 4. If relationship != null, isPatient = true
-      // 5. Cache the result locally
+      final hasLocalRelationship = await _localUserDataSource.hasTherapeuticRelationship();
 
-      await Future.delayed(const Duration(milliseconds: 100));
+      if (hasLocalRelationship) {
+        emit(state.copyWith(
+          isLoading: false,
+          isPatient: true,
+        ));
+      } else {
+        final result = await _therapyRepository.getMyRelationship();
 
-      emit(state.copyWith(
-        isLoading: false,
-        isPatient: false,  // TODO: Replace with actual relationship check
-      ));
+        if (result is Success) {
+          final relationship = (result as Success).data;
+          final isPatient = relationship != null && relationship.isActive;
+
+          if (isPatient) {
+            await _localUserDataSource.saveTherapeuticRelationship(true);
+          }
+
+          emit(state.copyWith(
+            isLoading: false,
+            isPatient: isPatient,
+          ));
+        } else {
+          emit(state.copyWith(
+            isLoading: false,
+            isPatient: false,
+          ));
+        }
+      }
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,

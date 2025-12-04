@@ -75,6 +75,9 @@ class MainApp extends StatelessWidget {
       service: TherapyService(httpClient: httpClient),
     );
 
+    // Create local user data source singleton
+    final localUserDataSource = LocalUserDataSource();
+
     return ProviderScope(
       child: MultiBlocProvider(
         providers: [
@@ -85,7 +88,10 @@ class MainApp extends StatelessWidget {
             create: (context) => RegisterBloc(repository: authRepository),
           ),
           BlocProvider(
-            create: (context) => HomeBloc(),
+            create: (context) => HomeBloc(
+              therapyRepository: therapyRepository,
+              localUserDataSource: localUserDataSource,
+            ),
           ),
           BlocProvider<TrackingBloc>(
             create: (context) => tracking_di.sl<TrackingBloc>()

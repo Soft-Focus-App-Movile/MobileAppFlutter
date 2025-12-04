@@ -21,7 +21,7 @@ class PsychologistCompleteProfileResponseDto {
   final String? lastName;
 
   @JsonKey(name: 'userType')
-  final String userType;
+  final String? userType;
 
   @JsonKey(name: 'dateOfBirth')
   final String? dateOfBirth;
@@ -50,16 +50,16 @@ class PsychologistCompleteProfileResponseDto {
   @JsonKey(name: 'mentalHealthGoals')
   final List<String>? mentalHealthGoals;
 
-  @JsonKey(name: 'emailNotifications')
+  @JsonKey(name: 'emailNotifications', defaultValue: true)
   final bool emailNotifications;
 
-  @JsonKey(name: 'pushNotifications')
+  @JsonKey(name: 'pushNotifications', defaultValue: true)
   final bool pushNotifications;
 
-  @JsonKey(name: 'isProfilePublic')
+  @JsonKey(name: 'isProfilePublic', defaultValue: false)
   final bool isProfilePublic;
 
-  @JsonKey(name: 'isActive')
+  @JsonKey(name: 'isActive', defaultValue: true)
   final bool isActive;
 
   @JsonKey(name: 'lastLogin')
@@ -72,19 +72,19 @@ class PsychologistCompleteProfileResponseDto {
   final String? updatedAt;
 
   @JsonKey(name: 'licenseNumber')
-  final String licenseNumber;
+  final String? licenseNumber;
 
   @JsonKey(name: 'professionalCollege')
-  final String professionalCollege;
+  final String? professionalCollege;
 
   @JsonKey(name: 'collegeRegion')
   final String? collegeRegion;
 
   @JsonKey(name: 'specialties')
-  final List<String> specialties;
+  final List<String>? specialties;
 
   @JsonKey(name: 'yearsOfExperience')
-  final int yearsOfExperience;
+  final int? yearsOfExperience;
 
   @JsonKey(name: 'university')
   final String? university;
@@ -107,7 +107,7 @@ class PsychologistCompleteProfileResponseDto {
   @JsonKey(name: 'additionalCertificatesUrls')
   final List<String>? additionalCertificatesUrls;
 
-  @JsonKey(name: 'isVerified')
+  @JsonKey(name: 'isVerified', defaultValue: false)
   final bool isVerified;
 
   @JsonKey(name: 'verificationDate')
@@ -122,7 +122,7 @@ class PsychologistCompleteProfileResponseDto {
   @JsonKey(name: 'professionalBio')
   final String? professionalBio;
 
-  @JsonKey(name: 'isAcceptingNewPatients')
+  @JsonKey(name: 'isAcceptingNewPatients', defaultValue: true)
   final bool isAcceptingNewPatients;
 
   @JsonKey(name: 'maxPatientsCapacity')
@@ -152,10 +152,10 @@ class PsychologistCompleteProfileResponseDto {
   @JsonKey(name: 'currency')
   final String? currency;
 
-  @JsonKey(name: 'isProfileVisibleInDirectory')
+  @JsonKey(name: 'isProfileVisibleInDirectory', defaultValue: true)
   final bool isProfileVisibleInDirectory;
 
-  @JsonKey(name: 'allowsDirectMessages')
+  @JsonKey(name: 'allowsDirectMessages', defaultValue: true)
   final bool allowsDirectMessages;
 
   @JsonKey(name: 'averageRating')
@@ -170,7 +170,7 @@ class PsychologistCompleteProfileResponseDto {
     required this.fullName,
     this.firstName,
     this.lastName,
-    required this.userType,
+    this.userType,
     this.dateOfBirth,
     this.gender,
     this.phone,
@@ -187,11 +187,11 @@ class PsychologistCompleteProfileResponseDto {
     this.lastLogin,
     this.createdAt,
     this.updatedAt,
-    required this.licenseNumber,
-    required this.professionalCollege,
+    this.licenseNumber,
+    this.professionalCollege,
     this.collegeRegion,
-    required this.specialties,
-    required this.yearsOfExperience,
+    this.specialties,
+    this.yearsOfExperience,
     this.university,
     this.graduationYear,
     this.degree,

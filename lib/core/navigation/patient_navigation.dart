@@ -3,13 +3,21 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-// NUEVO: Importar notificaciones
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
 import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
 import '../../features/notifications/presentation/blocs/preferences/notification_preferences_bloc.dart';
 import '../../features/notifications/injection_container.dart' as notifications_di;
 import '../../features/auth/domain/models/user_type.dart';
+import '../../features/profiles/presentation/blocs/profile/profile_bloc.dart';
+import '../../features/profiles/presentation/blocs/profile/profile_event.dart';
+import '../../features/profiles/data/repositories/profile_repository_impl.dart';
+import '../../features/profiles/data/remote/profile_service.dart';
+import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
+import '../../features/therapy/data/services/therapy_service.dart';
+import '../../features/auth/data/local/user_session.dart';
+import '../../core/networking/http_client.dart';
+import '../../features/profiles/presentation/pages/patient/patient_profile_page.dart';
 import 'route.dart';
 
 /// Patient user navigation graph.
@@ -52,17 +60,54 @@ List<RouteBase> patientRoutes() {
 
     // ========== FIN RUTAS DE NOTIFICACIONES ==========
 
-    // Patient Profile Screen
     GoRoute(
       path: AppRoute.patientProfile.path,
       name: 'patient_profile',
       builder: (context, state) {
-        // TODO: Profile team - Implement PatientProfilePage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mi Perfil')),
-          body: const Center(
-            child: Text('TODO: Profile team - Implementar PatientProfilePage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final profileService = ProfileService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+            final therapyRepository = TherapyRepositoryImpl(
+              service: therapyService,
+            );
+            final profileRepository = ProfileRepositoryImpl(
+              service: profileService,
+              therapyRepository: therapyRepository,
+              userSession: userSession,
+            );
+
+            return BlocProvider(
+              create: (context) => ProfileBloc(
+                profileRepository: profileRepository,
+                therapyRepository: therapyRepository,
+                userSession: userSession,
+              )..add(LoadProfile()),
+              child: PatientProfilePage(
+                onNavigateToEditProfile: () => context.push(AppRoute.editProfile.path),
+                onNavigateToNotifications: () => context.push(AppRoute.notificationPreferences.path),
+                onNavigateToPrivacyPolicy: () => context.push(AppRoute.privacyPolicy.path),
+                onNavigateToHelpSupport: () => context.push(AppRoute.helpSupport.path),
+                onLogout: () async {
+                  await userSession.clear();
+                  if (context.mounted) {
+                    context.go(AppRoute.login.path);
+                  }
+                },
+              ),
+            );
+          },
         );
       },
     ),
