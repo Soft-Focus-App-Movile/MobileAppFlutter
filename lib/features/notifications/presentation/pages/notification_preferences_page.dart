@@ -9,13 +9,33 @@ import '../blocs/preferences/notification_preferences_event.dart';
 import '../blocs/preferences/notification_preferences_state.dart';
 import '../widgets/time_range_picker_dialog.dart';
 
-class NotificationPreferencesPage extends StatelessWidget {
+class NotificationPreferencesPage extends StatefulWidget {
   final UserType userType;
 
   const NotificationPreferencesPage({
     super.key,
     required this.userType,
   });
+
+  @override
+  State<NotificationPreferencesPage> createState() => _NotificationPreferencesPageState();
+}
+
+class _NotificationPreferencesPageState extends State<NotificationPreferencesPage> {
+  @override
+  void initState() {
+    super.initState();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      
+      try {
+        final bloc = context.read<NotificationPreferencesBloc>();        
+        bloc.add(const LoadPreferences());        
+      } catch (e, stackTrace) {
+        print('StackTrace: $stackTrace');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,11 +142,11 @@ class NotificationPreferencesPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildMasterSwitch(context, masterPreference),
-            if (userType == UserType.PSYCHOLOGIST && masterPreference.isEnabled) ...[
+            if (widget.userType == UserType.PSYCHOLOGIST && masterPreference.isEnabled) ...[
               const Divider(color: Color(0xFFD9D9D9), thickness: 0.5, height: 32),
               _buildScheduleSection(context, masterPreference),
             ],
-            if (userType != UserType.PSYCHOLOGIST && masterPreference.isEnabled) ...[
+            if (widget.userType != UserType.PSYCHOLOGIST && masterPreference.isEnabled) ...[
               const Divider(color: Color(0xFFD9D9D9), thickness: 0.5, height: 32),
               _buildInfoCard(),
             ],
@@ -346,6 +366,12 @@ class NotificationPreferencesPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const Icon(
+              Icons.error_outline,
+              color: Color(0xFFE53935),
+              size: 48,
+            ),
+            const SizedBox(height: 16),
             Text(
               error,
               style: AppTextStyles.sourceSansRegular.copyWith(

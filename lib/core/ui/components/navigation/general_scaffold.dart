@@ -91,7 +91,7 @@ class _GeneralScaffoldState extends State<GeneralScaffold> {
       child: GeneralProfilePage(
         onNavigateToConnect: () => context.push(AppRoute.connectPsychologist.path),
         onNavigateToEditProfile: () => context.push(AppRoute.editProfile.path),
-        onNavigateToNotifications: () => context.push(AppRoute.notifications.path),
+        onNavigateToNotifications: () => context.push(AppRoute.notificationPreferences.path),
         onNavigateToPrivacyPolicy: () => context.push(AppRoute.privacyPolicy.path),
         onNavigateToHelpSupport: () => context.push(AppRoute.helpSupport.path),
         onNavigateToMyPlan: () => context.push(AppRoute.myPlan.path),

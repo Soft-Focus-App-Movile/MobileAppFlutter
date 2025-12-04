@@ -19,8 +19,8 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   final MarkAsReadUseCase markAsReadUseCase;
   final GetNotificationPreferencesUseCase getPreferencesUseCase;
   final NotificationRepository notificationRepository;
+  final SessionManager sessionManager;
   
-
   DeliveryStatus? _currentFilter;
   List<Notification> _allNotifications = [];
   Timer? _autoRefreshTimer;
@@ -30,6 +30,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     required this.markAsReadUseCase,
     required this.getPreferencesUseCase,
     required this.notificationRepository,
+    required this.sessionManager,
   }) : super(const NotificationsState()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<RefreshNotifications>(_onRefreshNotifications);
@@ -40,120 +41,140 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     on<StartAutoRefresh>(_onStartAutoRefresh);
     on<StopAutoRefresh>(_onStopAutoRefresh);
 
-    // Cargar notificaciones al iniciar
-    add(const LoadNotifications());
-    add(const StartAutoRefresh());
+    // ✅ REMOVIDO - No disparar eventos en el constructor
+    // add(const LoadNotifications());
+    // add(const StartAutoRefresh());
   }
 
   Future<void> _onLoadNotifications(
     LoadNotifications event,
     Emitter<NotificationsState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, error: null));
+    try {
+      emit(state.copyWith(isLoading: true, error: null));
 
-    final user = await SessionManager.instance.getCurrentUser();
-    if (user == null) {
+      final user = await sessionManager.getCurrentUser();
+      if (user == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          error: 'Usuario no autenticado',
+        ));
+        return;
+      }
+
+      final preferencesResult = await getPreferencesUseCase(user.id);
+      final masterPreference = preferencesResult.fold(
+        (failure) => null,
+        (preferences) => preferences.isNotEmpty ? preferences.first : null,
+      );
+
+      final notificationsEnabled = masterPreference?.isEnabled ?? true;
+      final schedule = masterPreference?.schedule;
+      final disabledAt = masterPreference?.disabledAt;
+
+      final result = await getNotificationsUseCase(userId: user.id, status: null);
+
+      result.fold(
+        (failure) {
+          emit(state.copyWith(
+            isLoading: false,
+            error: failure.message ?? 'Error al cargar notificaciones',
+          ));
+        },
+        (notifications) {
+          _allNotifications = notifications;
+
+          if (!notificationsEnabled && disabledAt != null) {
+            _allNotifications = notifications
+                .where((n) =>
+                    n.createdAt.isBefore(disabledAt) ||
+                    n.createdAt.isAtSameMomentAs(disabledAt))
+                .toList();
+          }
+
+          emit(state.copyWith(
+            notificationsEnabled: notificationsEnabled,
+            isLoading: false,
+          ));
+
+          _applyFilter(user.userType, notificationsEnabled, schedule, emit);
+          _loadUnreadCount(user.id, emit);
+        },
+      );
+    } catch (e, stackTrace) {
+      print('❌ Error en _onLoadNotifications: $e');
+      print('StackTrace: $stackTrace');
       emit(state.copyWith(
         isLoading: false,
-        error: 'Usuario no autenticado',
+        error: 'Error inesperado: ${e.toString()}',
       ));
-      return;
     }
-
-    final preferencesResult = await getPreferencesUseCase(user.id);
-    final masterPreference = preferencesResult.fold(
-      (failure) => null,
-      (preferences) => preferences.isNotEmpty ? preferences.first : null,
-    );
-
-    final notificationsEnabled = masterPreference?.isEnabled ?? true;
-    final schedule = masterPreference?.schedule;
-    final disabledAt = masterPreference?.disabledAt;
-
-    final result = await getNotificationsUseCase(userId: user.id, status: null);
-
-    result.fold(
-      (failure) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: failure.message ?? 'Error al cargar notificaciones',
-        ));
-      },
-      (notifications) {
-        _allNotifications = notifications;
-
-        if (!notificationsEnabled && disabledAt != null) {
-          _allNotifications = notifications
-              .where((n) =>
-                  n.createdAt.isBefore(disabledAt) ||
-                  n.createdAt.isAtSameMomentAs(disabledAt))
-              .toList();
-        }
-
-        emit(state.copyWith(
-          notificationsEnabled: notificationsEnabled,
-          isLoading: false,
-        ));
-
-        _applyFilter(user.userType, notificationsEnabled, schedule, emit);
-        _loadUnreadCount(user.id, emit);
-      },
-    );
   }
 
   Future<void> _onRefreshNotifications(
     RefreshNotifications event,
     Emitter<NotificationsState> emit,
   ) async {
-    emit(state.copyWith(isRefreshing: true, error: null));
+    try {
+      emit(state.copyWith(isRefreshing: true, error: null));
 
-    final user = await SessionManager.instance.getCurrentUser();
-    if (user == null) return;
+      final user = await sessionManager.getCurrentUser();
+      if (user == null) {
+        emit(state.copyWith(isRefreshing: false));
+        return;
+      }
 
-    final preferencesResult = await getPreferencesUseCase(user.id);
-    final masterPreference = preferencesResult.fold(
-      (failure) => null,
-      (preferences) => preferences.isNotEmpty ? preferences.first : null,
-    );
+      final preferencesResult = await getPreferencesUseCase(user.id);
+      final masterPreference = preferencesResult.fold(
+        (failure) => null,
+        (preferences) => preferences.isNotEmpty ? preferences.first : null,
+      );
 
-    final notificationsEnabled = masterPreference?.isEnabled ?? true;
-    final schedule = masterPreference?.schedule;
-    final disabledAt = masterPreference?.disabledAt;
+      final notificationsEnabled = masterPreference?.isEnabled ?? true;
+      final schedule = masterPreference?.schedule;
+      final disabledAt = masterPreference?.disabledAt;
 
-    final result = await notificationRepository.getNotifications(
-      userId: user.id,
-      status: null,
-      page: 1,
-      size: 20,
-    );
+      final result = await notificationRepository.getNotifications(
+        userId: user.id,
+        status: null,
+        page: 1,
+        size: 20,
+      );
 
-    result.fold(
-      (failure) {
-        emit(state.copyWith(
-          isRefreshing: false,
-          error: failure.message ?? 'Error al actualizar',
-        ));
-      },
-      (notifications) {
-        _allNotifications = notifications;
+      result.fold(
+        (failure) {
+          emit(state.copyWith(
+            isRefreshing: false,
+            error: failure.message ?? 'Error al actualizar',
+          ));
+        },
+        (notifications) {
+          _allNotifications = notifications;
 
-        if (!notificationsEnabled && disabledAt != null) {
-          _allNotifications = notifications
-              .where((n) =>
-                  n.createdAt.isBefore(disabledAt) ||
-                  n.createdAt.isAtSameMomentAs(disabledAt))
-              .toList();
-        }
+          if (!notificationsEnabled && disabledAt != null) {
+            _allNotifications = notifications
+                .where((n) =>
+                    n.createdAt.isBefore(disabledAt) ||
+                    n.createdAt.isAtSameMomentAs(disabledAt))
+                .toList();
+          }
 
-        emit(state.copyWith(
-          notificationsEnabled: notificationsEnabled,
-          isRefreshing: false,
-        ));
+          emit(state.copyWith(
+            notificationsEnabled: notificationsEnabled,
+            isRefreshing: false,
+          ));
 
-        _applyFilter(user.userType, notificationsEnabled, schedule, emit);
-        _loadUnreadCount(user.id, emit);
-      },
-    );
+          _applyFilter(user.userType, notificationsEnabled, schedule, emit);
+          _loadUnreadCount(user.id, emit);
+        },
+      );
+    } catch (e) {
+      print('❌ Error en _onRefreshNotifications: $e');
+      emit(state.copyWith(
+        isRefreshing: false,
+        error: 'Error al actualizar',
+      ));
+    }
   }
 
   Future<void> _onFilterNotifications(
@@ -162,7 +183,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     _currentFilter = event.status;
 
-    final user = await SessionManager.instance.getCurrentUser();
+    final user = await sessionManager.getCurrentUser();
     if (user == null) return;
 
     final preferencesResult = await getPreferencesUseCase(user.id);
@@ -211,7 +232,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     final result = await markAsReadUseCase(event.notificationId);
 
     result.fold(
-      (failure) {},
+      (failure) {
+        print('❌ Error al marcar como leída: ${failure.message}');
+      },
       (_) {
         _allNotifications = _allNotifications.map((notification) {
           if (notification.id == event.notificationId) {
@@ -223,7 +246,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           return notification;
         }).toList();
 
-        SessionManager.instance.getCurrentUser().then((user) async {
+        sessionManager.getCurrentUser().then((user) async {
           if (user != null) {
             final preferencesResult = await getPreferencesUseCase(user.id);
             final schedule = preferencesResult.fold(
@@ -242,13 +265,15 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     MarkAllAsRead event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await SessionManager.instance.getCurrentUser();
+    final user = await sessionManager.getCurrentUser();
     if (user == null) return;
 
     final result = await notificationRepository.markAllAsRead(user.id);
 
     result.fold(
-      (failure) {},
+      (failure) {
+        print('❌ Error al marcar todas como leídas: ${failure.message}');
+      },
       (_) {
         _allNotifications = _allNotifications.map((notification) {
           return notification.copyWith(
@@ -273,13 +298,15 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     DeleteNotification event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await SessionManager.instance.getCurrentUser();
+    final user = await sessionManager.getCurrentUser();
     if (user == null) return;
 
     final result = await notificationRepository.deleteNotification(event.notificationId);
 
     result.fold(
-      (failure) {},
+      (failure) {
+        print('❌ Error al eliminar notificación: ${failure.message}');
+      },
       (_) {
         _allNotifications = _allNotifications
             .where((n) => n.id != event.notificationId)
@@ -301,7 +328,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     final result = await notificationRepository.getUnreadCount(userId);
 
     result.fold(
-      (failure) {},
+      (failure) {
+        print('❌ Error al cargar contador: ${failure.message}');
+      },
       (count) {
         final finalCount = state.notificationsEnabled ? count : 0;
         emit(state.copyWith(unreadCount: finalCount));
@@ -315,7 +344,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
-      const Duration(seconds: 5),
+      const Duration(seconds: 30), // ✅ Cambiado de 5 a 30 segundos
       (_) => add(const RefreshNotifications()),
     );
   }

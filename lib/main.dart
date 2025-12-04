@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get_it/get_it.dart';
 import 'core/ui/theme.dart';
 import 'core/navigation/app_navigation.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -11,16 +12,46 @@ import 'features/home/presentation/blocs/home/home_bloc.dart';
 import 'features/therapy/data/repositories/therapy_repository_impl.dart';
 import 'features/therapy/data/services/therapy_service.dart';
 import 'core/networking/http_client.dart';
-import 'features/tracking/injection_container.dart' as di;
+import 'core/utils/session_manager.dart';
+import 'core/data/local/local_user_data_source.dart'; // NUEVO
+import 'features/tracking/injection_container.dart' as tracking_di;
 import 'features/tracking/presentation/bloc/tracking_bloc.dart';
 import 'features/tracking/presentation/bloc/tracking_event.dart';
+import 'features/notifications/injection_container.dart' as notifications_di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await di.init();
+  // Inicializar servicios core
+  await _initCoreServices();
+  
+  // Inicializar tracking
+  await tracking_di.init();
+  
+  // Inicializar notificaciones
+  await notifications_di.init();
 
   runApp(const MainApp());
+}
+
+/// Inicializa servicios core que son compartidos por múltiples features
+Future<void> _initCoreServices() async {
+  final sl = GetIt.instance;
+  
+  // Registrar HttpClient como singleton
+  if (!sl.isRegistered<HttpClient>()) {
+    sl.registerLazySingleton(() => HttpClient());
+  }
+  
+  // Registrar SessionManager como singleton
+  if (!sl.isRegistered<SessionManager>()) {
+    sl.registerLazySingleton(() => SessionManager.instance);
+  }
+  
+  // Registrar LocalUserDataSource como singleton
+  if (!sl.isRegistered<LocalUserDataSource>()) {
+    sl.registerLazySingleton(() => LocalUserDataSource());
+  }
 }
 
 class MainApp extends StatelessWidget {
@@ -56,9 +87,8 @@ class MainApp extends StatelessWidget {
           BlocProvider(
             create: (context) => HomeBloc(),
           ),
-
           BlocProvider<TrackingBloc>(
-            create: (context) => di.sl<TrackingBloc>()
+            create: (context) => tracking_di.sl<TrackingBloc>()
               ..add(LoadInitialDataEvent()), // Carga datos iniciales
           ),
         ],

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-// TODO: Tracking team - Uncomment when using BLoC pattern
-// import '../../features/tracking/presentation/screens/progress_screen.dart';
-// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+// NUEVO: Importar notificaciones
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
+import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
+import '../../features/notifications/presentation/blocs/preferences/notification_preferences_bloc.dart';
+import '../../features/notifications/injection_container.dart' as notifications_di;
+import '../../features/auth/domain/models/user_type.dart';
 import 'route.dart';
 
 /// Patient user navigation graph.
@@ -18,6 +23,34 @@ List<RouteBase> patientRoutes() {
       name: 'patient_home',
       builder: (context, state) => const PatientHomePage(),
     ),
+
+    // ========== NUEVAS RUTAS DE NOTIFICACIONES ==========
+    
+    // Notifications List Screen
+    GoRoute(
+      path: AppRoute.notifications.path,
+      name: 'patient_notifications',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (context) => notifications_di.sl<NotificationsBloc>(),
+          child: const NotificationsPage(),
+        );
+      },
+    ),
+
+    // Notification Preferences Screen
+    GoRoute(
+      path: AppRoute.notificationPreferences.path,
+      name: 'patient_notification_preferences',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (context) => notifications_di.sl<NotificationPreferencesBloc>(),
+          child: const NotificationPreferencesPage(userType: UserType.PATIENT),
+        );
+      },
+    ),
+
+    // ========== FIN RUTAS DE NOTIFICACIONES ==========
 
     // Patient Profile Screen
     GoRoute(

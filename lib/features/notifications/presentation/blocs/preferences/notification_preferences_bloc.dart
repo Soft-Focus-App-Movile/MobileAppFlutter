@@ -14,28 +14,32 @@ class NotificationPreferencesBloc
     extends Bloc<NotificationPreferencesEvent, NotificationPreferencesState> {
   final GetNotificationPreferencesUseCase getPreferencesUseCase;
   final UpdateNotificationPreferencesUseCase updatePreferencesUseCase;
+  final SessionManager sessionManager;
 
   NotificationPreferencesBloc({
     required this.getPreferencesUseCase,
     required this.updatePreferencesUseCase,
+    required this.sessionManager,
   }) : super(const NotificationPreferencesState()) {
     on<LoadPreferences>(_onLoadPreferences);
     on<ToggleMasterPreference>(_onToggleMasterPreference);
     on<UpdateSchedule>(_onUpdateSchedule);
-
-    // Cargar preferencias al iniciar
-    add(const LoadPreferences());
   }
 
   Future<void> _onLoadPreferences(
     LoadPreferences event,
     Emitter<NotificationPreferencesState> emit,
   ) async {
+    
     try {
       emit(state.copyWith(isLoading: true, error: null));
+      
 
-      final user = await SessionManager.instance.getCurrentUser();
+      final user = await sessionManager.getCurrentUser();
+      
+      
       if (user == null) {
+        
         emit(state.copyWith(
           isLoading: false,
           error: 'Usuario no autenticado',
@@ -43,24 +47,31 @@ class NotificationPreferencesBloc
         return;
       }
 
+      
       final result = await getPreferencesUseCase(user.id);
+      
 
       result.fold(
         (failure) {
+          
           emit(state.copyWith(
             isLoading: false,
             error: failure.message ?? 'Error al cargar preferencias',
           ));
         },
         (preferences) {
+          
           final enrichedPreferences = _ensureMainPreferences(preferences, user.id);
+          
           emit(state.copyWith(
             preferences: enrichedPreferences,
             isLoading: false,
           ));
         },
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ ERROR en _onLoadPreferences: $e');
+      print('StackTrace: $stackTrace');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error inesperado al cargar: ${e.toString()}',
@@ -119,6 +130,7 @@ class NotificationPreferencesBloc
         },
       );
     } catch (e) {
+      print('❌ Error en _onToggleMasterPreference: $e');
       emit(state.copyWith(
         isSaving: false,
         error: 'Error inesperado: ${e.toString()}',
@@ -181,6 +193,7 @@ class NotificationPreferencesBloc
         },
       );
     } catch (e) {
+      print('❌ Error en _onUpdateSchedule: $e');
       emit(state.copyWith(
         isSaving: false,
         error: 'Error inesperado: ${e.toString()}',
@@ -273,6 +286,7 @@ class NotificationPreferencesBloc
 
       return mutablePrefs;
     } catch (e) {
+      print('❌ Error en _ensureMainPreferences: $e');
       return [];
     }
   }

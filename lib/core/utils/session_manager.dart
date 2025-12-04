@@ -48,4 +48,10 @@ class SessionManager {
   Future<User?> getCurrentUser() async {
     return await _userSession.getUser();
   }
+  
+  // NUEVO: Método requerido por NotificationsBloc
+  /// Alias para getCurrentUser() - requerido por feature de notificaciones
+  Future<User?> getUser() async {
+    return await getCurrentUser();
+  }
 }

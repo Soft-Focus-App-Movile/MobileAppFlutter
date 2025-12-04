@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../../features/auth/data/local/user_session.dart';
 
 /// HTTP client wrapper that handles common HTTP operations with authentication
 /// and automatic 401 handling
@@ -8,6 +9,7 @@ class HttpClient {
   final http.Client _client;
   String? _token;
   final Function()? _onUnauthorized;
+  final UserSession _userSession = UserSession();
 
   HttpClient({
     http.Client? client,
@@ -26,13 +28,31 @@ class HttpClient {
   String? get token => _token;
 
   /// Build headers with authentication and content type
-  Map<String, String> _buildHeaders({Map<String, String>? additionalHeaders}) {
+  Future<Map<String, String>> _buildHeaders({Map<String, String>? additionalHeaders}) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
 
-    if (_token != null && _token!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $_token';
+    // ✅ NUEVO: Obtener token de la sesión si no está configurado
+    String? authToken = _token;
+    if (authToken == null || authToken.isEmpty) {
+      try {
+        final user = await _userSession.getUser();
+        final isExpired = await _userSession.isTokenExpired();
+        if (user != null && !isExpired) {
+          authToken = user.token;
+          print('🔑 Token obtenido de la sesión para HTTP request');
+        }
+      } catch (e) {
+        print('⚠️ Error obteniendo token de sesión: $e');
+      }
+    }
+
+    if (authToken != null && authToken.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $authToken';
+      print('🔑 Authorization header agregado');
+    } else {
+      print('⚠️ No hay token disponible para el request');
     }
 
     if (additionalHeaders != null) {
@@ -69,11 +89,16 @@ class HttpClient {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint')
         .replace(queryParameters: queryParameters);
 
+    print('📤 GET Request: $uri');
+    
+    final builtHeaders = await _buildHeaders(additionalHeaders: headers);
+
     final response = await _client.get(
       uri,
-      headers: _buildHeaders(additionalHeaders: headers),
+      headers: builtHeaders,
     );
 
+    print('📥 Response: ${response.statusCode}');
     _handleUnauthorized(response);
     return response;
   }
@@ -86,12 +111,17 @@ class HttpClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
+    print('📤 POST Request: $uri');
+    
+    final builtHeaders = await _buildHeaders(additionalHeaders: headers);
+
     final response = await _client.post(
       uri,
-      headers: _buildHeaders(additionalHeaders: headers),
+      headers: builtHeaders,
       body: body != null ? jsonEncode(body) : null,
     );
 
+    print('📥 Response: ${response.statusCode}');
     _handleUnauthorized(response);
     return response;
   }
@@ -104,12 +134,17 @@ class HttpClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
+    print('📤 PUT Request: $uri');
+    
+    final builtHeaders = await _buildHeaders(additionalHeaders: headers);
+
     final response = await _client.put(
       uri,
-      headers: _buildHeaders(additionalHeaders: headers),
+      headers: builtHeaders,
       body: body != null ? jsonEncode(body) : null,
     );
 
+    print('📥 Response: ${response.statusCode}');
     _handleUnauthorized(response);
     return response;
   }
@@ -122,12 +157,17 @@ class HttpClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
+    print('📤 PATCH Request: $uri');
+    
+    final builtHeaders = await _buildHeaders(additionalHeaders: headers);
+
     final response = await _client.patch(
       uri,
-      headers: _buildHeaders(additionalHeaders: headers),
+      headers: builtHeaders,
       body: body != null ? jsonEncode(body) : null,
     );
 
+    print('📥 Response: ${response.statusCode}');
     _handleUnauthorized(response);
     return response;
   }
@@ -140,12 +180,17 @@ class HttpClient {
   }) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
+    print('📤 DELETE Request: $uri');
+    
+    final builtHeaders = await _buildHeaders(additionalHeaders: headers);
+
     final response = await _client.delete(
       uri,
-      headers: _buildHeaders(additionalHeaders: headers),
+      headers: builtHeaders,
       body: body != null ? jsonEncode(body) : null,
     );
 
+    print('📥 Response: ${response.statusCode}');
     _handleUnauthorized(response);
     return response;
   }

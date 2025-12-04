@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
 import '../../features/home/presentation/blocs/home/home_bloc.dart';
 import '../../features/home/presentation/blocs/home/home_state.dart';
 import '../../features/home/presentation/blocs/home/home_event.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
+import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
+import '../../features/notifications/presentation/blocs/notifications/notifications_event.dart';
+import '../../features/notifications/presentation/blocs/preferences/notification_preferences_bloc.dart';
+import '../../features/notifications/presentation/blocs/preferences/notification_preferences_event.dart';
 import '../../features/profiles/presentation/pages/shared/privacy_policy_page.dart';
 import '../../features/profiles/presentation/pages/shared/help_support_page.dart';
 import '../../features/library/presentation/pages/library_page.dart';
@@ -17,12 +23,13 @@ import '../../core/ui/components/navigation/patient_bottom_nav.dart';
 import '../../core/ui/components/navigation/psychologist_scaffold.dart';
 import 'route.dart';
 
+final sl = GetIt.instance;
+
 /// Shared navigation graph.
 /// Contains routes available to all authenticated users
 List<RouteBase> sharedRoutes() {
   return [
     // Home Screen - Entry point after login
-    // Decides which home to show based on user type (exactly like Kotlin)
     GoRoute(
       path: AppRoute.home.path,
       name: 'home',
@@ -81,27 +88,87 @@ List<RouteBase> sharedRoutes() {
       },
     ),
 
-    // Notifications Screen
+    // ✅ Notifications Screen - CON BLOCPROVIDER
     GoRoute(
       path: AppRoute.notifications.path,
       name: 'notifications',
       builder: (context, state) {
-        // TODO: Add NotificationsBloc provider
-        return const NotificationsPage();
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final currentUser = snapshot.data;
+            if (currentUser == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Usuario no autenticado'),
+                ),
+              );
+            }
+
+            return BlocProvider(
+              create: (context) {
+                print('🔵 Creando NotificationsBloc...');
+                final bloc = sl<NotificationsBloc>();
+                print('✅ NotificationsBloc creado, disparando eventos...');
+                bloc.add(const LoadNotifications());
+                bloc.add(const StartAutoRefresh());
+                return bloc;
+              },
+              child: const NotificationsPage(),
+            );
+          },
+        );
       },
     ),
 
-    // Notification Preferences Screen
+    // ✅ Notification Preferences Screen - CON BLOCPROVIDER
     GoRoute(
       path: AppRoute.notificationPreferences.path,
       name: 'notification_preferences',
       builder: (context, state) {
-        // TODO: Implement NotificationPreferencesPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Preferencias de Notificaciones')),
-          body: const Center(
-            child: Text('TODO: Implementar NotificationPreferencesPage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final currentUser = snapshot.data;
+            if (currentUser == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Usuario no autenticado'),
+                ),
+              );
+            }
+
+            return BlocProvider(
+              create: (context) {
+                print('🔵 Creando NotificationPreferencesBloc...');
+                final bloc = sl<NotificationPreferencesBloc>();
+                print('✅ NotificationPreferencesBloc creado, disparando eventos...');
+                bloc.add(const LoadPreferences());
+                return bloc;
+              },
+              child: NotificationPreferencesPage(
+                userType: currentUser.userType,
+              ),
+            );
+          },
         );
       },
     ),
@@ -111,7 +178,6 @@ List<RouteBase> sharedRoutes() {
       path: AppRoute.aiWelcome.path,
       name: 'ai_welcome',
       builder: (context, state) {
-        // TODO: Implement AIWelcomePage and AI feature team will add their navigation
         return Scaffold(
           appBar: AppBar(title: const Text('Asistente IA')),
           body: const Center(
@@ -126,7 +192,6 @@ List<RouteBase> sharedRoutes() {
       path: AppRoute.emotionDetection.path,
       name: 'emotion_detection',
       builder: (context, state) {
-        // TODO: AI/Emotion Detection team will implement this
         return Scaffold(
           appBar: AppBar(title: const Text('Detección de Emociones')),
           body: const Center(
@@ -145,12 +210,11 @@ List<RouteBase> sharedRoutes() {
       },
     ),
 
-    // Permissions Screen (if needed)
+    // Permissions Screen
     GoRoute(
       path: AppRoute.permissions.path,
       name: 'permissions',
       builder: (context, state) {
-        // TODO: Implement PermissionsPage if permission flow is needed
         return Scaffold(
           appBar: AppBar(title: const Text('Permisos')),
           body: const Center(

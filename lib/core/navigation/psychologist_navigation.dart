@@ -20,12 +20,15 @@ import '../../features/profiles/presentation/blocs/psychologist_profile/psycholo
 import '../../features/profiles/presentation/blocs/psychologist_profile/psychologist_profile_event.dart';
 import '../../features/profiles/data/repositories/profile_repository_impl.dart';
 import '../../features/profiles/data/remote/profile_service.dart';
-import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
-import '../../features/therapy/data/services/therapy_service.dart';
 import '../../features/psychologist/data/remote/psychologist_service.dart';
 import '../../features/psychologist/data/repositories/psychologist_repository_impl.dart';
-import '../../features/auth/data/local/user_session.dart';
-import '../../core/networking/http_client.dart';
+// NUEVO: Importar notificaciones
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
+import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
+import '../../features/notifications/presentation/blocs/preferences/notification_preferences_bloc.dart';
+import '../../features/notifications/injection_container.dart' as notifications_di;
+import '../../features/auth/domain/models/user_type.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -38,6 +41,34 @@ List<RouteBase> psychologistRoutes() {
       name: 'psychologist_home',
       builder: (context, state) => const PsychologistHomePage(),
     ),
+
+    // ========== NUEVAS RUTAS DE NOTIFICACIONES ==========
+    
+    // Notifications List Screen
+    GoRoute(
+      path: AppRoute.notifications.path,
+      name: 'psychologist_notifications',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (context) => notifications_di.sl<NotificationsBloc>(),
+          child: const NotificationsPage(),
+        );
+      },
+    ),
+
+    // Notification Preferences Screen
+    GoRoute(
+      path: AppRoute.notificationPreferences.path,
+      name: 'psychologist_notification_preferences',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (context) => notifications_di.sl<NotificationPreferencesBloc>(),
+          child: const NotificationPreferencesPage(userType: UserType.PSYCHOLOGIST),
+        );
+      },
+    ),
+
+    // ========== FIN RUTAS DE NOTIFICACIONES ==========
 
     // Psychologist Profile Screen
     GoRoute(
