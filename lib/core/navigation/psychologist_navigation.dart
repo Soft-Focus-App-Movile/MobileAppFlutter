@@ -11,7 +11,6 @@ import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
 import '../../features/therapy/data/services/therapy_service.dart';
 import '../../features/auth/data/local/user_session.dart';
 import '../../core/networking/http_client.dart';
-import '../../core/ui/components/navigation/psychologist_bottom_nav.dart';
 import '../../features/profiles/presentation/pages/psychologist/my_invitation_code_page.dart';
 import '../../features/profiles/presentation/pages/psychologist/edit_personal_info_page.dart';
 import '../../features/profiles/presentation/pages/psychologist/professional_data_page.dart';
@@ -29,6 +28,11 @@ import '../../features/notifications/presentation/blocs/notifications/notificati
 import '../../features/notifications/presentation/blocs/preferences/notification_preferences_bloc.dart';
 import '../../features/notifications/injection_container.dart' as notifications_di;
 import '../../features/auth/domain/models/user_type.dart';
+import '../../features/crisis/presentation/screens/psychologist/crisis_alerts_screen.dart';
+import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_bloc.dart';
+import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
+import '../../features/crisis/data/repositories/crisis_repository_impl.dart';
+import '../../features/crisis/data/remote/crisis_service.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -329,12 +333,42 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.crisisAlerts.path,
       name: 'crisis_alerts',
       builder: (context, state) {
-        // TODO: Crisis team - Implement CrisisAlertsPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Alertas de Crisis')),
-          body: const Center(
-            child: Text('TODO: Crisis team - Implementar CrisisAlertsPage'),
-          ),
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+            final crisisService = CrisisService(httpClient: httpClient);
+            final crisisRepository = CrisisRepositoryImpl(crisisService);
+
+            return BlocProvider(
+              create: (context) => CrisisAlertsBloc(
+                crisisRepository: crisisRepository,
+              )..add(LoadCrisisAlerts()),
+              child: CrisisAlertsScreen(
+                onNavigateToPatientProfile: (patientId) {
+                  // TODO: Navigate to patient profile
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Ver perfil de paciente: $patientId')),
+                  );
+                },
+                onSendMessage: (patientId) {
+                  // TODO: Navigate to chat with patient
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Enviar mensaje a paciente: $patientId')),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     ),
@@ -360,7 +394,7 @@ List<RouteBase> psychologistRoutes() {
 Future<Widget> _buildPatientListPage() async {
   final userSession = UserSession();
   final user = await userSession.getUser();
-  
+
   if (user?.token == null) {
     return const Scaffold(
       body: Center(

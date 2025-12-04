@@ -9,6 +9,11 @@ import '../../../../features/profiles/data/repositories/profile_repository_impl.
 import '../../../../features/profiles/data/remote/profile_service.dart';
 import '../../../../features/therapy/data/repositories/therapy_repository_impl.dart';
 import '../../../../features/therapy/data/services/therapy_service.dart';
+import '../../../../features/crisis/presentation/screens/psychologist/crisis_alerts_screen.dart';
+import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_bloc.dart';
+import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
+import '../../../../features/crisis/data/repositories/crisis_repository_impl.dart';
+import '../../../../features/crisis/data/remote/crisis_service.dart';
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
 import '../../../navigation/route.dart';
@@ -40,7 +45,7 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
         children: [
           const PsychologistHomePage(),
           _buildPatientListPlaceholder(),
-          _buildCrisisAlertsPlaceholder(),
+          _buildCrisisAlertsPage(),
           _buildLibraryPlaceholder(),
           _buildProfilePage(),
         ],
@@ -57,12 +62,41 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
     );
   }
 
-  Widget _buildCrisisAlertsPlaceholder() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Alertas de Crisis')),
-      body: const Center(
-        child: Text('TODO: Crisis team - Implementar CrisisAlertsPage'),
-      ),
+  Widget _buildCrisisAlertsPage() {
+    final userSession = UserSession();
+
+    return FutureBuilder(
+      future: userSession.getUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final user = snapshot.data;
+        final httpClient = HttpClient(token: user?.token);
+        final crisisService = CrisisService(httpClient: httpClient);
+        final crisisRepository = CrisisRepositoryImpl(crisisService);
+
+        return BlocProvider(
+          create: (context) => CrisisAlertsBloc(
+            crisisRepository: crisisRepository,
+          )..add(LoadCrisisAlerts()),
+          child: CrisisAlertsScreen(
+            onNavigateToPatientProfile: (patientId) {
+              // TODO: Navigate to patient profile
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Ver perfil de paciente: $patientId')),
+              );
+            },
+            onSendMessage: (patientId) {
+              // TODO: Navigate to chat with patient
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Enviar mensaje a paciente: $patientId')),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

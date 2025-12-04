@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
+import '../../../../core/utils/location_helper.dart';
 import '../blocs/crisis/crisis_bloc.dart';
 import '../blocs/crisis/crisis_event.dart';
 import '../blocs/crisis/crisis_state.dart';
@@ -160,14 +161,17 @@ class _CrisisButtonState extends State<CrisisButton> {
     );
   }
 
-  void _sendCrisisAlert(BuildContext context) {
+  void _sendCrisisAlert(BuildContext context) async {
     _lastClickTime = DateTime.now().millisecondsSinceEpoch;
-    // TODO: Get actual location from LocationHelper
+
+    // Get current location
+    final position = await LocationHelper.getCurrentLocation();
+
     context.read<CrisisBloc>().add(
-          SendCrisisAlert(
-            latitude: null,
-            longitude: null,
-          ),
-        );
+      SendCrisisAlert(
+        latitude: position?.latitude,
+        longitude: position?.longitude,
+      ),
+    );
   }
 }

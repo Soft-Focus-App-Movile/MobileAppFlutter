@@ -139,7 +139,6 @@ class PsychologistBottomNav extends StatelessWidget {
         context.go(AppRoute.psychologistPatientList.path);
         break;
       case 2:
-        // TODO: Crisis team - implement navigation
         context.go(AppRoute.crisisAlerts.path);
         break;
       case 3:

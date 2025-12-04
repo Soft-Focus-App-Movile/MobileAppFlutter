@@ -1,28 +1,38 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+import '../../../../core/networking/http_client.dart';
 import '../models/request/create_crisis_alert_request_dto.dart';
 import '../models/request/update_alert_status_request_dto.dart';
 import '../models/response/crisis_alert_response_dto.dart';
 
 class CrisisService {
-  final Dio _dio;
+  final HttpClient _httpClient;
 
-  CrisisService(this._dio);
+  CrisisService({HttpClient? httpClient})
+      : _httpClient = httpClient ?? HttpClient();
 
   Future<CrisisAlertResponseDto> createCrisisAlert(
     CreateCrisisAlertRequestDto request,
   ) async {
-    final response = await _dio.post(
+    final response = await _httpClient.post(
       'crisis/alert',
-      data: request.toJson(),
+      body: jsonEncode(request.toJson()),
     );
-    return CrisisAlertResponseDto.fromJson(response.data);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return CrisisAlertResponseDto.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al crear alerta de crisis: ${response.body}');
+    }
   }
 
   Future<List<CrisisAlertResponseDto>> getPatientAlerts() async {
-    final response = await _dio.get('crisis/alerts/patient');
-    return (response.data as List)
-        .map((json) => CrisisAlertResponseDto.fromJson(json))
-        .toList();
+    final response = await _httpClient.get('crisis/alerts/patient');
+    if (response.statusCode == 200) {
+      return (jsonDecode(response.body) as List)
+          .map((json) => CrisisAlertResponseDto.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error al obtener alertas del paciente: ${response.body}');
+    }
   }
 
   Future<List<CrisisAlertResponseDto>> getPsychologistAlerts({
@@ -30,27 +40,38 @@ class CrisisService {
     String? status,
     int? limit,
   }) async {
-    final response = await _dio.get(
-      'crisis/alerts',
-      queryParameters: {
-        if (severity != null) 'severity': severity,
-        if (status != null) 'status': status,
-        if (limit != null) 'limit': limit,
-      },
-    );
-    return (response.data as List)
-        .map((json) => CrisisAlertResponseDto.fromJson(json))
-        .toList();
+    final queryParams = <String, String>{};
+    if (severity != null) queryParams['severity'] = severity;
+    if (status != null) queryParams['status'] = status;
+    if (limit != null) queryParams['limit'] = limit.toString();
+
+    String url = 'crisis/alerts';
+    if (queryParams.isNotEmpty) {
+      url += '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}';
+    }
+
+    final response = await _httpClient.get(url);
+    if (response.statusCode == 200) {
+      return (jsonDecode(response.body) as List)
+          .map((json) => CrisisAlertResponseDto.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Error al obtener alertas del psicólogo: ${response.body}');
+    }
   }
 
   Future<CrisisAlertResponseDto> updateAlertStatus(
     String alertId,
     UpdateAlertStatusRequestDto request,
   ) async {
-    final response = await _dio.put(
+    final response = await _httpClient.put(
       'crisis/alerts/$alertId/status',
-      data: request.toJson(),
+      body: jsonEncode(request.toJson()),
     );
-    return CrisisAlertResponseDto.fromJson(response.data);
+    if (response.statusCode == 200) {
+      return CrisisAlertResponseDto.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al actualizar estado de alerta: ${response.body}');
+    }
   }
 }
