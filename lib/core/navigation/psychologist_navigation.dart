@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/home/presentation/pages/pages.dart';
-// TODO: Tracking team - Uncomment when using BLoC pattern
-// import '../../features/tracking/presentation/screens/check_in_form_screen.dart';
+import '../../features/therapy/presentation/psychologist/patientlist/pages/patient_list_page.dart';
+import '../../features/therapy/presentation/psychologist/patientlist/blocs/patient_list_bloc.dart';
+import '../../features/therapy/presentation/psychologist/patientlist/blocs/patient_list_event.dart';
+import '../../features/therapy/domain/usecases/get_patient_directory_usecase.dart';
+import '../../features/therapy/data/repositories/therapy_repository_impl.dart';
+import '../../features/therapy/data/services/therapy_service.dart';
+import '../../features/auth/data/local/user_session.dart';
+import '../../core/networking/http_client.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -112,12 +119,27 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.psychologistPatientList.path,
       name: 'psychologist_patient_list',
       builder: (context, state) {
-        // TODO: Therapy team - Implement PsychologistPatientListPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mis Pacientes')),
-          body: const Center(
-            child: Text('TODO: Therapy team - Implementar PsychologistPatientListPage'),
-          ),
+        return FutureBuilder(
+          future: _buildPatientListPage(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(
+                  child: Text('Error: ${snapshot.error}'),
+                ),
+              );
+            }
+
+            return snapshot.data ?? const Scaffold(
+              body: Center(child: Text('Error al cargar')),
+            );
+          },
         );
       },
     ),
@@ -152,4 +174,31 @@ List<RouteBase> psychologistRoutes() {
       },
     ),
   ];
+}
+
+// Función auxiliar para construir la página con el token
+Future<Widget> _buildPatientListPage() async {
+  final userSession = UserSession();
+  final user = await userSession.getUser();
+  
+  if (user?.token == null) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Error: No hay sesión activa'),
+      ),
+    );
+  }
+
+  // Crear HttpClient con el token
+  final httpClient = HttpClient(token: user!.token);
+  final therapyService = TherapyService(httpClient: httpClient);
+  final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+  final getPatientDirectoryUseCase = GetPatientDirectoryUseCase(therapyRepository);
+
+  return BlocProvider(
+    create: (context) => PatientListBloc(
+      getPatientDirectoryUseCase: getPatientDirectoryUseCase,
+    )..add(LoadPatients()),
+    child: const PatientListPage(),
+  );
 }

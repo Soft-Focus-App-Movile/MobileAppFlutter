@@ -15,7 +15,7 @@ PatientDirectoryItemResponseDto _$PatientDirectoryItemResponseDtoFromJson(
   patientName: json['patientName'] as String,
   age: (json['age'] as num).toInt(),
   profilePhotoUrl: json['profilePhotoUrl'] as String,
-  status: (json['status'] as num).toInt(),
+  status: json['status'] as String,
   startDate: json['startDate'] as String,
   sessionCount: (json['sessionCount'] as num).toInt(),
   lastSessionDate: json['lastSessionDate'] as String?,

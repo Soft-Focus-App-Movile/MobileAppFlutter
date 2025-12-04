@@ -8,6 +8,8 @@ import 'features/auth/data/services/auth_service.dart';
 import 'features/auth/presentation/blocs/login/login_bloc.dart';
 import 'features/auth/presentation/blocs/register/register_bloc.dart';
 import 'features/home/presentation/blocs/home/home_bloc.dart';
+import 'features/therapy/data/repositories/therapy_repository_impl.dart';
+import 'features/therapy/data/services/therapy_service.dart';
 import 'core/networking/http_client.dart';
 import 'features/tracking/injection_container.dart' as di;
 import 'features/tracking/presentation/bloc/tracking_bloc.dart';
@@ -26,11 +28,20 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    // Create HTTP client singleton
+    final httpClient = HttpClient();
+
     // Create auth repository singleton
     final authRepository = AuthRepositoryImpl(
       service: AuthService(
-        httpClient: HttpClient(),
+        httpClient: httpClient,
       ),
+    );
+
+    // Create therapy repository singleton
+    final therapyRepository = TherapyRepositoryImpl(
+      service: TherapyService(httpClient: httpClient),
     );
 
     return ProviderScope(
