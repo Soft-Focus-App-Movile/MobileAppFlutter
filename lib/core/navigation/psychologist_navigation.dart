@@ -151,7 +151,5 @@ List<RouteBase> psychologistRoutes() {
         );
       },
     ),
-
-
   ];
 }

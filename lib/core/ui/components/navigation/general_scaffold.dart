@@ -11,6 +11,7 @@ import '../../../../features/therapy/data/repositories/therapy_repository_impl.d
 import '../../../../features/therapy/data/services/therapy_service.dart';
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
+import '../../../../features/library/presentation/pages/library_page.dart';
 import '../../../navigation/route.dart';
 import '../../colors.dart';
 
@@ -41,7 +42,7 @@ class _GeneralScaffoldState extends State<GeneralScaffold> {
           const GeneralHomePage(),
           _buildDiaryPlaceholder(),
           _buildAIPlaceholder(),
-          _buildLibraryPlaceholder(),
+          const LibraryPage(),
           _buildProfilePage(),
         ],
       ),
@@ -62,15 +63,6 @@ class _GeneralScaffoldState extends State<GeneralScaffold> {
       appBar: AppBar(title: const Text('Asistente IA')),
       body: const Center(
         child: Text('TODO: AI team - Implementar AIWelcomePage'),
-      ),
-    );
-  }
-
-  Widget _buildLibraryPlaceholder() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Biblioteca')),
-      body: const Center(
-        child: Text('TODO: Library team - Implementar LibraryPage'),
       ),
     );
   }
