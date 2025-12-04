@@ -28,7 +28,7 @@ class SearchBarWithFilter extends StatelessWidget {
               ),
               child: TextField(
                 onChanged: onSearchQueryChange,
-                style: sourceSansRegular.copyWith(color: white),
+                style: sourceSansRegular.copyWith(color: Colors.black),
                 decoration: InputDecoration(
                   hintText: 'Buscar...',
                   hintStyle: sourceSansRegular.copyWith(color: gray808),

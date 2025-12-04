@@ -282,10 +282,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
                       if (content.isMusic) {
                         final musicUrl = content.spotifyUrl ?? content.externalUrl;
-                        print('🎵 MÚSICA DETECTADA: ${content.title}');
-                        print('🔗 spotifyUrl: ${content.spotifyUrl}');
-                        print('🔗 externalUrl: ${content.externalUrl}');
-                        print('🔗 musicUrl final: $musicUrl');
 
                         if (musicUrl != null && musicUrl.isNotEmpty) {
                           final uri = Uri.parse(musicUrl);
