@@ -282,7 +282,12 @@ class _LibraryPageState extends State<LibraryPage> {
 
                       if (content.isMusic) {
                         final musicUrl = content.spotifyUrl ?? content.externalUrl;
-                        if (musicUrl != null) {
+                        print('🎵 MÚSICA DETECTADA: ${content.title}');
+                        print('🔗 spotifyUrl: ${content.spotifyUrl}');
+                        print('🔗 externalUrl: ${content.externalUrl}');
+                        print('🔗 musicUrl final: $musicUrl');
+
+                        if (musicUrl != null && musicUrl.isNotEmpty) {
                           final uri = Uri.parse(musicUrl);
                           if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
                             if (context.mounted) {
@@ -290,6 +295,12 @@ class _LibraryPageState extends State<LibraryPage> {
                                 const SnackBar(content: Text('No se pudo abrir Spotify')),
                               );
                             }
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Esta música no tiene URL de Spotify')),
+                            );
                           }
                         }
                       } else {

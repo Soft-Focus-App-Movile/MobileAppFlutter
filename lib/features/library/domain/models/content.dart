@@ -45,9 +45,9 @@ class Content {
     this.thumbnailUrl,
   });
 
-  bool get isMovie => type == 'movie';
-  bool get isMusic => type == 'music';
-  bool get isVideo => type == 'video';
+  bool get isMovie => type.toLowerCase() == 'movie';
+  bool get isMusic => type.toLowerCase() == 'music';
+  bool get isVideo => type.toLowerCase() == 'video';
 
   String get posterImage => posterUrl ?? thumbnailUrl ?? backdropUrl ?? '';
 
