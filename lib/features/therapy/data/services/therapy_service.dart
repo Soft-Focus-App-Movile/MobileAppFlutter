@@ -91,7 +91,6 @@ class TherapyService {
   }
 
   /// Get patient check-in history
-  /// Endpoint: tracking/history/{userId} (Verificar ruta exacta en ApiConstants)
   Future<CheckInHistoryResponseDto> getPatientCheckIns({
     required String patientId,
     required int page,
@@ -104,14 +103,22 @@ class TherapyService {
     if (startDate != null) queryParams += '&startDate=$startDate';
     if (endDate != null) queryParams += '&endDate=$endDate';
 
-    // Asumiendo que la ruta base es 'tracking/patient-history' o similar.
-    // Reemplaza 'tracking/check-ins/history' con el valor real de ApiConstants.Tracking.PATIENT_CHECK_INS_HISTORY
-    final endpoint = 'tracking/check-ins/history/$patientId?$queryParams';
+    final endpoint = 'tracking/check-ins/patient/$patientId?$queryParams';
     
     final response = await _httpClient.get(endpoint);
 
     if (response.statusCode == 200) {
-      return CheckInHistoryResponseDto.fromJson(jsonDecode(response.body));
+      // 1. Decodificamos el JSON a un mapa modificable
+      final Map<String, dynamic> jsonMap = jsonDecode(response.body);
+
+      // 2. CORRECCIÓN: Si la API devuelve 'data', lo asignamos a 'checkIns' 
+      // para que el DTO pueda leerlo correctamente.
+      if (jsonMap.containsKey('data')) {
+        jsonMap['checkIns'] = jsonMap['data'];
+      }
+
+      // 3. Ahora sí llamamos al fromJson con la estructura corregida
+      return CheckInHistoryResponseDto.fromJson(jsonMap);
     } else {
       throw Exception('Failed to get patient check-ins: ${response.body}');
     }

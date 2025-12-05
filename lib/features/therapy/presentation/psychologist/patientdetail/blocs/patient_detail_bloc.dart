@@ -100,7 +100,7 @@ class PatientDetailBloc extends Bloc<PatientDetailEvent, PatientDetailState> {
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
     
-    final weeklyResult = await _therapyRepository.getPatientCheckIns(
+    final weeklyResult = await _getPatientCheckInsUseCase(
       patientId: event.patientId,
       startDate: DateFormat('yyyy-MM-dd').format(startOfWeek),
       endDate: DateFormat('yyyy-MM-dd').format(endOfWeek),
