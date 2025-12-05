@@ -30,6 +30,10 @@ class _PatientDetailPageState extends State<PatientDetailPage>
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
+  // Estado para el filtro
+  String _selectedFilter = 'Todos';
+  final List<String> _filterOptions = ['Todos', 'Pendientes', 'Completados'];
+
   @override
   void initState() {
     super.initState();
@@ -298,6 +302,18 @@ class _PatientDetailPageState extends State<PatientDetailPage>
       );
     }
 
+    final filteredAssignments = state.assignments.where((assignment) {
+      switch (_selectedFilter) {
+        case 'Completados':
+          return assignment.isCompleted;
+        case 'Pendientes':
+          return !assignment.isCompleted;
+        case 'Todos':
+        default:
+          return true;
+      }
+    }).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -311,12 +327,21 @@ class _PatientDetailPageState extends State<PatientDetailPage>
             ],
           ),
           const SizedBox(height: 16),
-          ...state.assignments.map(
-            (assignment) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: TaskCard(assignment: assignment),
+          if (filteredAssignments.isEmpty)
+             Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text(
+                'No hay tareas $_selectedFilter',
+                style: sourceSansRegular.copyWith(color: gray808),
+              ),
+            )
+          else
+            ...filteredAssignments.map(
+              (assignment) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TaskCard(assignment: assignment),
+              ),
             ),
-          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -324,21 +349,43 @@ class _PatientDetailPageState extends State<PatientDetailPage>
   }
 
   Widget _buildFilterButton() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: grayD9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Todos',
-            style: sourceSansRegular.copyWith(fontSize: 16),
-          ),
-          const Icon(Icons.arrow_drop_down, color: gray808),
-        ],
+    return PopupMenuButton<String>(
+      initialValue: _selectedFilter,
+      onSelected: (String newValue) {
+        setState(() {
+          _selectedFilter = newValue;
+        });
+      },
+      itemBuilder: (BuildContext context) {
+        return _filterOptions.map((String option) {
+          return PopupMenuItem<String>(
+            value: option,
+            child: Text(
+              option,
+              style: sourceSansRegular.copyWith(fontSize: 16),
+            ),
+          );
+        }).toList();
+      },
+      // El "child" es el diseño visual del botón que ya tenías
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: grayD9),
+          borderRadius: BorderRadius.circular(8),
+          color: white, // Asegúrate de tener fondo por si acaso
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _selectedFilter, // Ahora muestra la selección actual
+              style: sourceSansRegular.copyWith(fontSize: 16),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_drop_down, color: gray808),
+          ],
+        ),
       ),
     );
   }
