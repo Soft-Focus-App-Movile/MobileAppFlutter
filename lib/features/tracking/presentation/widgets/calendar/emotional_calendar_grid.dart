@@ -8,11 +8,11 @@ class EmotionalCalendarGrid extends StatelessWidget {
   final Function(EmotionalCalendarEntry) onDateClick;
 
   const EmotionalCalendarGrid({
-    Key? key,
+    super.key,
     required this.entries,
     required this.selectedMonth,
     required this.onDateClick,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +128,7 @@ class EmotionalCalendarGrid extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (hasEntry)
-                        Container(
+                        SizedBox(
                           width: 24,
                           height: 24,
                           child: ClipRRect(

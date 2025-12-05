@@ -25,7 +25,7 @@ class PsychologistStatsPage extends StatefulWidget {
 class _PsychologistStatsPageState extends State<PsychologistStatsPage> {
   String? _fromDate;
   String? _toDate;
-  bool _isRefreshing = false;
+  final bool _isRefreshing = false;
   PsychologistStats? _stats;
   bool _isLoadingStats = true;
   String? _errorMessage;

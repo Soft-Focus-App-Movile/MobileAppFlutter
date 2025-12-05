@@ -20,6 +20,7 @@ class Content {
   final String? channelName;
   final String? youtubeUrl;
   final String? thumbnailUrl;
+  final String? photoUrl;
 
   const Content({
     required this.externalId,
@@ -43,6 +44,7 @@ class Content {
     this.channelName,
     this.youtubeUrl,
     this.thumbnailUrl,
+    this.photoUrl,
   });
 
   bool get isMovie => type.toLowerCase() == 'movie';

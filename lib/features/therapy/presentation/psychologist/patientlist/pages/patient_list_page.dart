@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../../../core/ui/colors.dart';
 import '../../../../../../core/ui/text_styles.dart';
 import '../blocs/patient_list_bloc.dart';

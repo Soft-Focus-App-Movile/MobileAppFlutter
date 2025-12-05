@@ -55,8 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _hasOpenedPrivacyPolicy = false;
   bool _showPrivacyPolicyDialog = false;
 
-  Set<String> _selectedSpecialties = {};
-  bool _specialtiesExpanded = false;
+  final Set<String> _selectedSpecialties = {};
+  final bool _specialtiesExpanded = false;
 
   // Document URIs
   String? _licenseFile;
@@ -605,7 +605,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           );
                                     }
                                   : null,
-                              activeColor: green49,
+                              activeThumbColor: green49,
                               activeTrackColor: green49.withOpacity(0.5),
                               inactiveThumbColor: gray828,
                               inactiveTrackColor: grayE0,

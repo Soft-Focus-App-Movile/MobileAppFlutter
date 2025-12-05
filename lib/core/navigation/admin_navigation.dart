@@ -21,13 +21,11 @@ Dio _createDio() {
   return dio;
 }
 
-/**
- * Admin navigation graph.
- * Contains routes specific to ADMIN users:
- * - User management
- * - Psychologist verification
- * - System administration
- */
+/// Admin navigation graph.
+/// Contains routes specific to ADMIN users:
+/// - User management
+/// - Psychologist verification
+/// - System administration
 List<RouteBase> adminRoutes() {
   return [
     // Admin Users List Screen

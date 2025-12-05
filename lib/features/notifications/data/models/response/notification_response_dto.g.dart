@@ -21,9 +21,7 @@ NotificationResponseDto _$NotificationResponseDtoFromJson(
   deliveredAt: json['deliveredAt'] as String?,
   readAt: json['readAt'] as String?,
   createdAt: json['createdAt'] as String,
-  metadata: (json['metadata'] as Map<String, dynamic>?)?.map(
-    (k, e) => MapEntry(k, e as String),
-  ),
+  metadata: json['metadata'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$NotificationResponseDtoToJson(

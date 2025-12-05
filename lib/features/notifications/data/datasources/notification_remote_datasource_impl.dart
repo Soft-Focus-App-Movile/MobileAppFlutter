@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../../../core/networking/http_client.dart';
 import '../../domain/entities/delivery_status.dart';
 import '../../domain/entities/notification_type.dart';

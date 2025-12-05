@@ -12,7 +12,7 @@ NotificationPreferenceResponseDto _$NotificationPreferenceResponseDtoFromJson(
   id: json['id'] as String,
   userId: json['user_id'] as String,
   notificationType: json['notification_type'] as String,
-  isEnabled: json['is_enabled'] as bool,
+  isEnabled: json['is_enabled'] as bool? ?? true,
   schedule: json['schedule'] == null
       ? null
       : ScheduleDto.fromJson(json['schedule'] as Map<String, dynamic>),

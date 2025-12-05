@@ -5,10 +5,10 @@ class CalendarDatePicker extends StatelessWidget {
   final Function(DateTime) onDateSelected;
 
   const CalendarDatePicker({
-    Key? key,
+    super.key,
     required this.selectedDate,
     required this.onDateSelected,
-  }) : super(key: key);
+  });
 
   String _getMonthName(int month) {
     const months = [

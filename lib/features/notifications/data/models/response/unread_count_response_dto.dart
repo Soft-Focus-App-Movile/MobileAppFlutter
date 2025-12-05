@@ -4,7 +4,7 @@ part 'unread_count_response_dto.g.dart';
 
 @JsonSerializable()
 class UnreadCountResponseDto {
-  @JsonKey(name: 'unread_count')
+  @JsonKey(name: 'unread_count', defaultValue: 0)
   final int unreadCount;
 
   const UnreadCountResponseDto({required this.unreadCount});

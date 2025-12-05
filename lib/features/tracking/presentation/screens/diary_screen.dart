@@ -9,7 +9,7 @@ import '../widgets/calendar/emotional_calendar_grid.dart';
 import '../../../../core/navigation/route.dart';
 
 class DiaryScreen extends StatefulWidget {
-  const DiaryScreen({Key? key}) : super(key: key);
+  const DiaryScreen({super.key});
 
   @override
   State<DiaryScreen> createState() => _DiaryScreenState();

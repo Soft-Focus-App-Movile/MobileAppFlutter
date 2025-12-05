@@ -9,13 +9,15 @@ part of 'preference_list_response_dto.dart';
 PreferenceListResponseDto _$PreferenceListResponseDtoFromJson(
   Map<String, dynamic> json,
 ) => PreferenceListResponseDto(
-  preferences: (json['preferences'] as List<dynamic>?)
-      ?.map(
-        (e) => NotificationPreferenceResponseDto.fromJson(
-          e as Map<String, dynamic>,
-        ),
-      )
-      .toList(),
+  preferences:
+      (json['preferences'] as List<dynamic>?)
+          ?.map(
+            (e) => NotificationPreferenceResponseDto.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$PreferenceListResponseDtoToJson(

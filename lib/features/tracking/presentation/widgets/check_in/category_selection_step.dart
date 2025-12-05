@@ -8,13 +8,13 @@ class CategorySelectionStep extends StatelessWidget {
   final VoidCallback onNext;
 
   const CategorySelectionStep({
-    Key? key,
+    super.key,
     required this.title,
     required this.categories,
     required this.selectedCategories,
     required this.onCategoriesSelected,
     required this.onNext,
-  }) : super(key: key);
+  });
 
   void _toggleCategory(String category) {
     final newSelection = List<String>.from(selectedCategories);
@@ -93,7 +93,7 @@ class CategorySelectionStep extends StatelessWidget {
               ),
             ),
           );
-        }).toList(),
+        }),
         
         const SizedBox(height: 32),
         

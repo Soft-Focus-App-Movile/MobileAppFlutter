@@ -52,26 +52,16 @@ class RegisterInitial extends RegisterState {
 /// Loading state while registration request is in progress
 class RegisterLoading extends RegisterState {
   const RegisterLoading({
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 }
 
 /// Success state for regular registration (needs login after)
@@ -80,26 +70,16 @@ class RegisterSuccessRegular extends RegisterState {
 
   const RegisterSuccessRegular({
     required this.result,
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 
   @override
   List<Object?> get props => [
@@ -122,26 +102,16 @@ class RegisterSuccessOAuth extends RegisterState {
 
   const RegisterSuccessOAuth({
     required this.user,
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 
   @override
   List<Object?> get props => [
@@ -161,26 +131,16 @@ class RegisterSuccessOAuth extends RegisterState {
 /// State when psychologist registration is pending verification
 class RegisterPsychologistPendingVerification extends RegisterState {
   const RegisterPsychologistPendingVerification({
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 }
 
 /// Error state with error message
@@ -189,26 +149,16 @@ class RegisterError extends RegisterState {
 
   const RegisterError({
     required this.message,
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 
   @override
   List<Object?> get props => [
@@ -228,24 +178,14 @@ class RegisterError extends RegisterState {
 /// State with updated form fields (for reactive UI)
 class RegisterFormUpdated extends RegisterState {
   const RegisterFormUpdated({
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String? userType,
-    String? oauthTempToken,
-    String? emailError,
-    String? passwordError,
-    String? confirmPasswordError,
-    List<dynamic>? universitySuggestions,
-  }) : super(
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          userType: userType,
-          oauthTempToken: oauthTempToken,
-          emailError: emailError,
-          passwordError: passwordError,
-          confirmPasswordError: confirmPasswordError,
-          universitySuggestions: universitySuggestions,
-        );
+    required super.email,
+    required super.password,
+    required super.confirmPassword,
+    super.userType = null,
+    super.oauthTempToken,
+    super.emailError,
+    super.passwordError,
+    super.confirmPasswordError,
+    super.universitySuggestions,
+  });
 }

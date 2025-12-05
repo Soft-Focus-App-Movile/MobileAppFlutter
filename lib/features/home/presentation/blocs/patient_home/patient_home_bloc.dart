@@ -1,3 +1,4 @@
+import 'package:flutter_app_softfocus/features/library/domain/models/content.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../library/data/services/content_search_service.dart';
@@ -113,7 +114,7 @@ class PatientHomeBloc extends Bloc<PatientHomeEvent, PatientHomeState> {
 
   Future<void> _loadRecommendations(Emitter<PatientHomeState> emit) async {
     try {
-      final allContent = [];
+      final allContent = <Content>[];
 
       // Search for movies and music
       final movieKeyword = _getNextKeyword(movieKeywords);

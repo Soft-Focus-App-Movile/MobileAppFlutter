@@ -7,11 +7,11 @@ class MoodSelectionStep extends StatelessWidget {
   final VoidCallback onNext;
 
   const MoodSelectionStep({
-    Key? key,
+    super.key,
     required this.selectedMood,
     required this.onMoodSelected,
     required this.onNext,
-  }) : super(key: key);
+  });
 
 
 

@@ -9,14 +9,14 @@ class DashboardStatCard extends StatelessWidget {
   final Color backgroundColor;
 
   const DashboardStatCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.subtitle,
     required this.icon,
     this.color = const Color(0xFF6B8E7C),
     this.backgroundColor = const Color(0xFFE8F5E9),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

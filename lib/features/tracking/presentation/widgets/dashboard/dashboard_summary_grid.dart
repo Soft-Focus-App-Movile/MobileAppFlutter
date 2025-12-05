@@ -9,13 +9,13 @@ class DashboardSummaryGrid extends StatelessWidget {
   final double averageMoodLevel;
 
   const DashboardSummaryGrid({
-    Key? key,
+    super.key,
     required this.totalCheckIns,
     required this.totalEmotionalEntries,
     required this.averageEmotionalLevel,
     required this.averageEnergyLevel,
     required this.averageMoodLevel,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

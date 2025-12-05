@@ -8,7 +8,7 @@ import '../widgets/progress/activity_chart.dart';
 import '../widgets/progress/statistics_card.dart';
 
 class ProgressScreen extends StatefulWidget {
-  const ProgressScreen({Key? key}) : super(key: key);
+  const ProgressScreen({super.key});
 
   @override
   State<ProgressScreen> createState() => _ProgressScreenState();

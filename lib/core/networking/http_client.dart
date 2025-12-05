@@ -71,7 +71,7 @@ class HttpClient {
       // Call the logout callback if provided
       if (_onUnauthorized != null) {
         try {
-          _onUnauthorized!();
+          _onUnauthorized();
           print('✓ Session data cleared successfully');
         } catch (e) {
           print('✗ Error clearing session data: $e');

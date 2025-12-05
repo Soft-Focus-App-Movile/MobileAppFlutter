@@ -6,11 +6,11 @@ class CommonTagsWidget extends StatelessWidget {
   final IconData icon;
 
   const CommonTagsWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.tags,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

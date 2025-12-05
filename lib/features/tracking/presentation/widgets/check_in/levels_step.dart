@@ -10,7 +10,7 @@ class LevelsStep extends StatelessWidget {
   final VoidCallback onNext;
 
   const LevelsStep({
-    Key? key,
+    super.key,
     required this.emotionalLevel,
     required this.onEmotionalLevelChanged,
     required this.energyLevel,
@@ -18,7 +18,7 @@ class LevelsStep extends StatelessWidget {
     required this.sleepHours,
     required this.onSleepHoursChanged,
     required this.onNext,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EmptyProgressState extends StatelessWidget {
-  const EmptyProgressState({Key? key}) : super(key: key);
+  const EmptyProgressState({super.key});
 
   @override
   Widget build(BuildContext context) {

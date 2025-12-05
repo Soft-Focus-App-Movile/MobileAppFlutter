@@ -22,44 +22,29 @@ abstract class ProfileState extends Equatable {
 
 class ProfileLoading extends ProfileState {
   const ProfileLoading({
-    User? user,
-    AssignedPsychologist? assignedPsychologist,
-    String? relationshipId,
-    PsychologistLoadState psychologistLoadState = PsychologistLoadState.loading,
-  }) : super(
-          user: user,
-          assignedPsychologist: assignedPsychologist,
-          relationshipId: relationshipId,
-          psychologistLoadState: psychologistLoadState,
-        );
+    super.user,
+    super.assignedPsychologist,
+    super.relationshipId,
+    super.psychologistLoadState,
+  });
 }
 
 class ProfileSuccess extends ProfileState {
   const ProfileSuccess({
-    required User user,
-    AssignedPsychologist? assignedPsychologist,
-    String? relationshipId,
-    PsychologistLoadState psychologistLoadState = PsychologistLoadState.loading,
-  }) : super(
-          user: user,
-          assignedPsychologist: assignedPsychologist,
-          relationshipId: relationshipId,
-          psychologistLoadState: psychologistLoadState,
-        );
+    required User super.user,
+    super.assignedPsychologist,
+    super.relationshipId,
+    super.psychologistLoadState,
+  });
 }
 
 class ProfileUpdateSuccess extends ProfileState {
   const ProfileUpdateSuccess({
-    required User user,
-    AssignedPsychologist? assignedPsychologist,
-    String? relationshipId,
-    PsychologistLoadState psychologistLoadState = PsychologistLoadState.loading,
-  }) : super(
-          user: user,
-          assignedPsychologist: assignedPsychologist,
-          relationshipId: relationshipId,
-          psychologistLoadState: psychologistLoadState,
-        );
+    required User super.user,
+    super.assignedPsychologist,
+    super.relationshipId,
+    super.psychologistLoadState,
+  });
 }
 
 class ProfileError extends ProfileState {
@@ -67,16 +52,11 @@ class ProfileError extends ProfileState {
 
   const ProfileError({
     required this.message,
-    User? user,
-    AssignedPsychologist? assignedPsychologist,
-    String? relationshipId,
-    PsychologistLoadState psychologistLoadState = PsychologistLoadState.loading,
-  }) : super(
-          user: user,
-          assignedPsychologist: assignedPsychologist,
-          relationshipId: relationshipId,
-          psychologistLoadState: psychologistLoadState,
-        );
+    super.user,
+    super.assignedPsychologist,
+    super.relationshipId,
+    super.psychologistLoadState,
+  });
 
   @override
   List<Object?> get props => [

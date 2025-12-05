@@ -13,7 +13,7 @@ import '../bloc/tracking_state.dart';
 import '../../../../core/utils/mood_helper.dart';
 
 class CheckInFormScreen extends StatefulWidget {
-  const CheckInFormScreen({Key? key}) : super(key: key);
+  const CheckInFormScreen({super.key});
 
   @override
   State<CheckInFormScreen> createState() => _CheckInFormScreenState();

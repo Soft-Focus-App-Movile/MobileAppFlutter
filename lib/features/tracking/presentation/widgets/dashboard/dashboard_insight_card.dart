@@ -4,9 +4,9 @@ class DashboardInsightCard extends StatelessWidget {
   final List<String> insights;
 
   const DashboardInsightCard({
-    Key? key,
+    super.key,
     required this.insights,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,7 @@ class DashboardInsightCard extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

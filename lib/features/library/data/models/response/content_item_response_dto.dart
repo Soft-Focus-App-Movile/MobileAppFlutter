@@ -1,3 +1,4 @@
+import 'package:flutter_app_softfocus/features/library/domain/models/content.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'content_item_response_dto.g.dart';
@@ -96,4 +97,31 @@ class ContentItemResponseDto {
       _$ContentItemResponseDtoFromJson(json);
 
   Map<String, dynamic> toJson() => _$ContentItemResponseDtoToJson(this);
+  Content toDomain() {
+    return Content(
+      externalId: externalId,
+      id: id,
+      type: type,
+      title: title,
+      overview: overview,
+      posterUrl: posterUrl,
+      backdropUrl: backdropUrl,
+      rating: rating != null ? double.tryParse(rating!) : null,
+      duration: duration != null ? int.tryParse(duration!) : null,
+      releaseDate: releaseDate,
+      genres: genres,
+      trailerUrl: trailerUrl,
+      emotionalTags: emotionalTags,
+      externalUrl: externalUrl,
+      artist: artist,
+      album: album,
+      previewUrl: previewUrl,
+      spotifyUrl: spotifyUrl,
+      channelName: channelName,
+      youtubeUrl: youtubeUrl,
+      thumbnailUrl: thumbnailUrl,
+      photoUrl: photoUrl,
+    );
+  }
+
 }

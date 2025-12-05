@@ -5,10 +5,10 @@ class SummaryStep extends StatelessWidget {
   final bool isLoading;
 
   const SummaryStep({
-    Key? key,
+    super.key,
     required this.onSubmit,
     required this.isLoading,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

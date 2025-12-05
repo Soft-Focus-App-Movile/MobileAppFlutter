@@ -11,8 +11,7 @@ abstract class PsychologistProfileState extends Equatable {
 }
 
 class PsychologistProfileLoading extends PsychologistProfileState {
-  const PsychologistProfileLoading({PsychologistProfile? profile})
-      : super(profile: profile);
+  const PsychologistProfileLoading({super.profile});
 }
 
 class PsychologistProfileSuccess extends PsychologistProfileState {
@@ -25,8 +24,8 @@ class PsychologistProfileError extends PsychologistProfileState {
 
   const PsychologistProfileError({
     required this.message,
-    PsychologistProfile? profile,
-  }) : super(profile: profile);
+    super.profile,
+  });
 
   @override
   List<Object?> get props => [message, profile];

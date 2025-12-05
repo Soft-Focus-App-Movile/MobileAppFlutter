@@ -40,10 +40,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     on<DeleteNotification>(_onDeleteNotification);
     on<StartAutoRefresh>(_onStartAutoRefresh);
     on<StopAutoRefresh>(_onStopAutoRefresh);
-
-    // ✅ REMOVIDO - No disparar eventos en el constructor
-    // add(const LoadNotifications());
-    // add(const StartAutoRefresh());
   }
 
   Future<void> _onLoadNotifications(
@@ -181,18 +177,26 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     FilterNotifications event,
     Emitter<NotificationsState> emit,
   ) async {
-    _currentFilter = event.status;
+    // ✅ CORREGIDO: Todo debe estar dentro del async
+    try {
+      _currentFilter = event.status;
 
-    final user = await sessionManager.getCurrentUser();
-    if (user == null) return;
+      final user = await sessionManager.getCurrentUser();
+      if (user == null) return;
 
-    final preferencesResult = await getPreferencesUseCase(user.id);
-    final schedule = preferencesResult.fold(
-      (failure) => null,
-      (preferences) => preferences.isNotEmpty ? preferences.first?.schedule : null,
-    );
+      final preferencesResult = await getPreferencesUseCase(user.id);
+      final schedule = preferencesResult.fold(
+        (failure) => null,
+        (preferences) => preferences.isNotEmpty ? preferences.first.schedule : null,
+      );
 
-    _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
+      // ✅ Verificar que el emitter no esté completo antes de emitir
+      if (!emit.isDone) {
+        _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
+      }
+    } catch (e) {
+      print('❌ Error en _onFilterNotifications: $e');
+    }
   }
 
   void _applyFilter(
@@ -201,6 +205,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     dynamic schedule,
     Emitter<NotificationsState> emit,
   ) {
+    // ✅ Verificar que el emitter no esté completo
+    if (emit.isDone) return;
+
     var filtered = _currentFilter == DeliveryStatus.delivered
         ? _allNotifications.where((n) => n.readAt == null).toList()
         : _allNotifications;
@@ -229,102 +236,130 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     MarkNotificationAsRead event,
     Emitter<NotificationsState> emit,
   ) async {
-    final result = await markAsReadUseCase(event.notificationId);
+    // ✅ CORREGIDO: Ahora todo es await, no .then()
+    try {
+      final result = await markAsReadUseCase(event.notificationId);
 
-    result.fold(
-      (failure) {
-        print('❌ Error al marcar como leída: ${failure.message}');
-      },
-      (_) {
-        _allNotifications = _allNotifications.map((notification) {
-          if (notification.id == event.notificationId) {
-            return notification.copyWith(
-              status: DeliveryStatus.read,
-              readAt: DateTime.now(),
-            );
-          }
-          return notification;
-        }).toList();
+      result.fold(
+        (failure) {
+          print('❌ Error al marcar como leída: ${failure.message}');
+        },
+        (_) async {
+          // ✅ Actualizar lista local
+          _allNotifications = _allNotifications.map((notification) {
+            if (notification.id == event.notificationId) {
+              return notification.copyWith(
+                status: DeliveryStatus.read,
+                readAt: DateTime.now(),
+              );
+            }
+            return notification;
+          }).toList();
 
-        sessionManager.getCurrentUser().then((user) async {
-          if (user != null) {
+          // ✅ AWAIT en lugar de .then()
+          final user = await sessionManager.getCurrentUser();
+          if (user != null && !emit.isDone) {
             final preferencesResult = await getPreferencesUseCase(user.id);
             final schedule = preferencesResult.fold(
               (failure) => null,
-              (preferences) => preferences.isNotEmpty ? preferences.first?.schedule : null,
+              (preferences) => preferences.isNotEmpty ? preferences.first.schedule : null,
             );
+            
             _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
-            _loadUnreadCount(user.id, emit);
+            await _loadUnreadCount(user.id, emit);
           }
-        });
-      },
-    );
+        },
+      );
+    } catch (e) {
+      print('❌ Error en _onMarkAsRead: $e');
+    }
   }
 
   Future<void> _onMarkAllAsRead(
     MarkAllAsRead event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await sessionManager.getCurrentUser();
-    if (user == null) return;
+    // ✅ CORREGIDO: Ahora todo es await
+    try {
+      final user = await sessionManager.getCurrentUser();
+      if (user == null) return;
 
-    final result = await notificationRepository.markAllAsRead(user.id);
+      final result = await notificationRepository.markAllAsRead(user.id);
 
-    result.fold(
-      (failure) {
-        print('❌ Error al marcar todas como leídas: ${failure.message}');
-      },
-      (_) {
-        _allNotifications = _allNotifications.map((notification) {
-          return notification.copyWith(
-            status: DeliveryStatus.read,
-            readAt: notification.readAt ?? DateTime.now(),
-          );
-        }).toList();
+      result.fold(
+        (failure) {
+          print('❌ Error al marcar todas como leídas: ${failure.message}');
+        },
+        (_) async {
+          // ✅ Actualizar lista local
+          _allNotifications = _allNotifications.map((notification) {
+            return notification.copyWith(
+              status: DeliveryStatus.read,
+              readAt: notification.readAt ?? DateTime.now(),
+            );
+          }).toList();
 
-        getPreferencesUseCase(user.id).then((preferencesResult) {
-          final schedule = preferencesResult.fold(
-            (failure) => null,
-            (preferences) => preferences.isNotEmpty ? preferences.first?.schedule : null,
-          );
-          _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
-          _loadUnreadCount(user.id, emit);
-        });
-      },
-    );
+          // ✅ AWAIT en lugar de .then()
+          if (!emit.isDone) {
+            final preferencesResult = await getPreferencesUseCase(user.id);
+            final schedule = preferencesResult.fold(
+              (failure) => null,
+              (preferences) => preferences.isNotEmpty ? preferences.first.schedule : null,
+            );
+            
+            _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
+            await _loadUnreadCount(user.id, emit);
+          }
+        },
+      );
+    } catch (e) {
+      print('❌ Error en _onMarkAllAsRead: $e');
+    }
   }
 
   Future<void> _onDeleteNotification(
     DeleteNotification event,
     Emitter<NotificationsState> emit,
   ) async {
-    final user = await sessionManager.getCurrentUser();
-    if (user == null) return;
+    // ✅ CORREGIDO: Ahora todo es await
+    try {
+      final user = await sessionManager.getCurrentUser();
+      if (user == null) return;
 
-    final result = await notificationRepository.deleteNotification(event.notificationId);
+      final result = await notificationRepository.deleteNotification(event.notificationId);
 
-    result.fold(
-      (failure) {
-        print('❌ Error al eliminar notificación: ${failure.message}');
-      },
-      (_) {
-        _allNotifications = _allNotifications
-            .where((n) => n.id != event.notificationId)
-            .toList();
+      result.fold(
+        (failure) {
+          print('❌ Error al eliminar notificación: ${failure.message}');
+        },
+        (_) async {
+          // ✅ Actualizar lista local
+          _allNotifications = _allNotifications
+              .where((n) => n.id != event.notificationId)
+              .toList();
 
-        getPreferencesUseCase(user.id).then((preferencesResult) {
-          final schedule = preferencesResult.fold(
-            (failure) => null,
-            (preferences) => preferences.isNotEmpty ? preferences.first?.schedule : null,
-          );
-          _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
-          _loadUnreadCount(user.id, emit);
-        });
-      },
-    );
+          // ✅ AWAIT en lugar de .then()
+          if (!emit.isDone) {
+            final preferencesResult = await getPreferencesUseCase(user.id);
+            final schedule = preferencesResult.fold(
+              (failure) => null,
+              (preferences) => preferences.isNotEmpty ? preferences.first.schedule : null,
+            );
+            
+            _applyFilter(user.userType, state.notificationsEnabled, schedule, emit);
+            await _loadUnreadCount(user.id, emit);
+          }
+        },
+      );
+    } catch (e) {
+      print('❌ Error en _onDeleteNotification: $e');
+    }
   }
 
   Future<void> _loadUnreadCount(String userId, Emitter<NotificationsState> emit) async {
+    // ✅ Verificar que el emitter no esté completo
+    if (emit.isDone) return;
+
     final result = await notificationRepository.getUnreadCount(userId);
 
     result.fold(
@@ -332,8 +367,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         print('❌ Error al cargar contador: ${failure.message}');
       },
       (count) {
-        final finalCount = state.notificationsEnabled ? count : 0;
-        emit(state.copyWith(unreadCount: finalCount));
+        if (!emit.isDone) {
+          final finalCount = state.notificationsEnabled ? count : 0;
+          emit(state.copyWith(unreadCount: finalCount));
+        }
       },
     );
   }
@@ -344,7 +381,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
-      const Duration(seconds: 30), // ✅ Cambiado de 5 a 30 segundos
+      const Duration(seconds: 30),
       (_) => add(const RefreshNotifications()),
     );
   }

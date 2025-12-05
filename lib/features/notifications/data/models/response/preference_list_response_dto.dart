@@ -5,6 +5,7 @@ part 'preference_list_response_dto.g.dart';
 
 @JsonSerializable()
 class PreferenceListResponseDto {
+  @JsonKey(name: 'preferences', defaultValue: [])
   final List<NotificationPreferenceResponseDto>? preferences;
 
   const PreferenceListResponseDto({this.preferences});

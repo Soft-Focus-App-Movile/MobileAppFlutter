@@ -7,13 +7,11 @@ abstract class CrisisAlertsState {
 }
 
 class CrisisAlertsLoadingState extends CrisisAlertsState {
-  CrisisAlertsLoadingState({String? selectedSeverity})
-      : super(selectedSeverity: selectedSeverity);
+  CrisisAlertsLoadingState({super.selectedSeverity});
 }
 
 class CrisisAlertsEmptyState extends CrisisAlertsState {
-  CrisisAlertsEmptyState({String? selectedSeverity})
-      : super(selectedSeverity: selectedSeverity);
+  CrisisAlertsEmptyState({super.selectedSeverity});
 }
 
 class CrisisAlertsSuccessState extends CrisisAlertsState {
@@ -21,8 +19,8 @@ class CrisisAlertsSuccessState extends CrisisAlertsState {
 
   CrisisAlertsSuccessState({
     required this.alerts,
-    String? selectedSeverity,
-  }) : super(selectedSeverity: selectedSeverity);
+    super.selectedSeverity,
+  });
 }
 
 class CrisisAlertsErrorState extends CrisisAlertsState {
@@ -30,6 +28,6 @@ class CrisisAlertsErrorState extends CrisisAlertsState {
 
   CrisisAlertsErrorState({
     required this.message,
-    String? selectedSeverity,
-  }) : super(selectedSeverity: selectedSeverity);
+    super.selectedSeverity,
+  });
 }

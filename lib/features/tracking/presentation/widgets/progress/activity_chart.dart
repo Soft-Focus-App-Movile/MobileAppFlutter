@@ -7,9 +7,9 @@ class ActivityChart extends StatelessWidget {
   final List<CheckIn> checkIns;
 
   const ActivityChart({
-    Key? key,
+    super.key,
     required this.checkIns,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

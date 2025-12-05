@@ -8,7 +8,9 @@ part of 'unread_count_response_dto.dart';
 
 UnreadCountResponseDto _$UnreadCountResponseDtoFromJson(
   Map<String, dynamic> json,
-) => UnreadCountResponseDto(unreadCount: (json['unread_count'] as num).toInt());
+) => UnreadCountResponseDto(
+  unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
+);
 
 Map<String, dynamic> _$UnreadCountResponseDtoToJson(
   UnreadCountResponseDto instance,

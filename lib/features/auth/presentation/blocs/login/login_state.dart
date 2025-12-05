@@ -24,9 +24,9 @@ class LoginInitial extends LoginState {
 /// Loading state while login request is in progress
 class LoginLoading extends LoginState {
   const LoginLoading({
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 }
 
 /// Success state with authenticated user
@@ -35,9 +35,9 @@ class LoginSuccess extends LoginState {
 
   const LoginSuccess({
     required this.user,
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 
   @override
   List<Object?> get props => [user, email, password];
@@ -49,9 +49,9 @@ class LoginError extends LoginState {
 
   const LoginError({
     required this.message,
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 
   @override
   List<Object?> get props => [message, email, password];
@@ -60,9 +60,9 @@ class LoginError extends LoginState {
 /// State when psychologist account is pending verification
 class LoginPsychologistPendingVerification extends LoginState {
   const LoginPsychologistPendingVerification({
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 }
 
 /// State when OAuth verification indicates user needs to register
@@ -71,9 +71,9 @@ class LoginOAuthRegistrationRequired extends LoginState {
 
   const LoginOAuthRegistrationRequired({
     required this.oauthData,
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 
   @override
   List<Object?> get props => [oauthData, email, password];
@@ -82,7 +82,7 @@ class LoginOAuthRegistrationRequired extends LoginState {
 /// State with updated form fields (for reactive UI)
 class LoginFormUpdated extends LoginState {
   const LoginFormUpdated({
-    required String email,
-    required String password,
-  }) : super(email: email, password: password);
+    required super.email,
+    required super.password,
+  });
 }

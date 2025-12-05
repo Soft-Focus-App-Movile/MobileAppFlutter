@@ -137,10 +137,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _cityController.text != _initialCity ||
         _selectedGender != _initialGender ||
         _phoneController.text != _initialPhone ||
-        !_selectedInterests.difference(_initialInterests).isEmpty ||
-        !_initialInterests.difference(_selectedInterests).isEmpty ||
-        !_selectedGoals.difference(_initialGoals).isEmpty ||
-        !_initialGoals.difference(_selectedGoals).isEmpty ||
+        _selectedInterests.difference(_initialInterests).isNotEmpty ||
+        _initialInterests.difference(_selectedInterests).isNotEmpty ||
+        _selectedGoals.difference(_initialGoals).isNotEmpty ||
+        _initialGoals.difference(_selectedGoals).isNotEmpty ||
         _profileImage != null;
   }
 
@@ -515,7 +515,7 @@ class _GenderDropdown extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: selectedGender.isEmpty ? null : selectedGender,
+          initialValue: selectedGender.isEmpty ? null : selectedGender,
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFEBEFE5),

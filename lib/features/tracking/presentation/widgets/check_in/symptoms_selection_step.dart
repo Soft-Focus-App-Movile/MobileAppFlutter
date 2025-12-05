@@ -6,11 +6,11 @@ class SymptomsSelectionStep extends StatefulWidget {
   final VoidCallback onNext;
 
   const SymptomsSelectionStep({
-    Key? key,
+    super.key,
     required this.selectedSymptoms,
     required this.onSymptomsSelected,
     required this.onNext,
-  }) : super(key: key);
+  });
 
   @override
   State<SymptomsSelectionStep> createState() => _SymptomsSelectionStepState();

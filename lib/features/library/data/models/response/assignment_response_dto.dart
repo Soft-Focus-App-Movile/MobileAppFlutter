@@ -1,5 +1,7 @@
+import 'package:flutter_app_softfocus/features/library/domain/models/assignment.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'content_item_response_dto.dart';
+
 
 part 'assignment_response_dto.g.dart';
 
@@ -38,4 +40,16 @@ class AssignmentResponseDto {
       _$AssignmentResponseDtoFromJson(json);
 
   Map<String, dynamic> toJson() => _$AssignmentResponseDtoToJson(this);
+
+  Assignment toDomain() {
+    return Assignment(
+      id: assignmentId,
+      content: content.toDomain(),
+      psychologistId: psychologistId,
+      notes: notes,
+      assignedDate: DateTime.parse(assignedAt),
+      isCompleted: isCompleted,
+      completedDate: completedAt != null ? DateTime.parse(completedAt!) : null,
+    );
+  }
 }

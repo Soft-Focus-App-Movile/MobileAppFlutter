@@ -8,13 +8,13 @@ class DetailsStep extends StatefulWidget {
   final VoidCallback onSkip;
 
   const DetailsStep({
-    Key? key,
+    super.key,
     required this.question,
     required this.notes,
     required this.onNotesChanged,
     required this.onNext,
     required this.onSkip,
-  }) : super(key: key);
+  });
 
   @override
   State<DetailsStep> createState() => _DetailsStepState();

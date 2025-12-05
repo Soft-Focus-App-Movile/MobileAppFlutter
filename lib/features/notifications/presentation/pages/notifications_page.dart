@@ -19,6 +19,32 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   int _selectedTab = 0;
+  NotificationsBloc? _notificationsBloc; // 
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NotificationsBloc>().add(const LoadNotifications());
+        context.read<NotificationsBloc>().add(const StartAutoRefresh());
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    _notificationsBloc ??= context.read<NotificationsBloc>();
+  }
+
+  @override
+  void dispose() {
+    
+    _notificationsBloc?.add(const StopAutoRefresh());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -272,11 +298,5 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    context.read<NotificationsBloc>().add(const StopAutoRefresh());
-    super.dispose();
   }
 }

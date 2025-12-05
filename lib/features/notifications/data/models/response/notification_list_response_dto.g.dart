@@ -9,12 +9,16 @@ part of 'notification_list_response_dto.dart';
 NotificationListResponseDto _$NotificationListResponseDtoFromJson(
   Map<String, dynamic> json,
 ) => NotificationListResponseDto(
-  notifications: (json['notifications'] as List<dynamic>)
-      .map((e) => NotificationResponseDto.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  total: (json['total'] as num).toInt(),
-  page: (json['page'] as num).toInt(),
-  pageSize: (json['pageSize'] as num).toInt(),
+  notifications:
+      (json['notifications'] as List<dynamic>?)
+          ?.map(
+            (e) => NotificationResponseDto.fromJson(e as Map<String, dynamic>),
+          )
+          .toList() ??
+      [],
+  total: (json['total'] as num?)?.toInt() ?? 0,
+  page: (json['page'] as num?)?.toInt() ?? 1,
+  pageSize: (json['pageSize'] as num?)?.toInt() ?? 20,
 );
 
 Map<String, dynamic> _$NotificationListResponseDtoToJson(

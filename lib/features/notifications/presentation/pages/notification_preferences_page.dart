@@ -187,7 +187,7 @@ class _NotificationPreferencesPageState extends State<NotificationPreferencesPag
           onChanged: (_) => context.read<NotificationPreferencesBloc>().add(
                 const ToggleMasterPreference(),
               ),
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: AppColors.green49,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFB2B2B2),

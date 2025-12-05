@@ -8,6 +8,7 @@ part 'notification_preference_response_dto.g.dart';
 
 @JsonSerializable()
 class NotificationPreferenceResponseDto {
+  @JsonKey(name: 'id')
   final String id;
 
   @JsonKey(name: 'user_id')
@@ -16,9 +17,10 @@ class NotificationPreferenceResponseDto {
   @JsonKey(name: 'notification_type')
   final String notificationType;
 
-  @JsonKey(name: 'is_enabled')
+  @JsonKey(name: 'is_enabled', defaultValue: true)
   final bool isEnabled;
 
+  @JsonKey(name: 'schedule')
   final ScheduleDto? schedule;
 
   @JsonKey(name: 'delivery_method')
@@ -44,11 +46,12 @@ class NotificationPreferenceResponseDto {
 
   NotificationPreference toDomain() {
     DateTime? parseDateTime(String? dateStr) {
-      if (dateStr == null) return null;
+      if (dateStr == null || dateStr.isEmpty) return null;
       try {
         final cleaned = dateStr.replaceAll('Z', '');
         return DateTime.parse(cleaned);
-      } catch (_) {
+      } catch (e) {
+        print('⚠️ Error parsing disabled_at: $dateStr - $e');
         return null;
       }
     }
