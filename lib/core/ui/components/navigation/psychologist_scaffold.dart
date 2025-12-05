@@ -20,6 +20,17 @@ import '../../../../features/home/presentation/blocs/psychologist_home/psycholog
 import '../../../../features/psychologist/data/remote/psychologist_service.dart';
 
 import '../../../../features/library/presentation/pages/library_page.dart';
+import '../../../../features/library/data/services/assignments_service.dart';
+
+import '../../../../features/therapy/presentation/psychologist/patientlist/pages/patient_list_page.dart';
+import '../../../../features/therapy/presentation/psychologist/patientlist/blocs/patient_list_bloc.dart';
+import '../../../../features/therapy/presentation/psychologist/patientlist/blocs/patient_list_event.dart';
+import '../../../../features/therapy/domain/usecases/get_patient_directory_usecase.dart';
+import '../../../../features/therapy/presentation/psychologist/patientdetail/pages/patient_detail_page.dart';
+import '../../../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_bloc.dart';
+import '../../../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_event.dart';
+import '../../../../features/therapy/domain/usecases/get_patient_profile_usecase.dart';
+import '../../../../features/therapy/domain/usecases/get_patient_check_ins_usecase.dart';
 
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
@@ -30,32 +41,60 @@ class PsychologistScaffold extends StatefulWidget {
   const PsychologistScaffold({super.key});
 
   @override
-  State<PsychologistScaffold> createState() => _PsychologistScaffoldState();
+  State<PsychologistScaffold> createState() => PsychologistScaffoldState();
 }
 
-class _PsychologistScaffoldState extends State<PsychologistScaffold> {
+class PsychologistScaffoldState extends State<PsychologistScaffold> {
   int _selectedIndex = 0;
+
+  // Estado para manejar la navegación interna de Pacientes
+  String? _selectedPatientId;
+
+  // Método público para navegar al detalle
+  void showPatientDetail(String patientId) {
+    setState(() {
+      _selectedIndex = 1; // Asegurar que estamos en la tab de pacientes
+      _selectedPatientId = patientId;
+    });
+  }
+
+  // Método público para volver a la lista
+  void showPatientList() {
+    setState(() {
+      _selectedPatientId = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: _PsychologistBottomNavInternal(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-      ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildHomePage(),
-          _buildPatientListPlaceholder(),
-          _buildCrisisAlertsPage(),
-          _buildLibraryPlaceholder(),
-          _buildProfilePage(),
-        ],
+    // PopScope maneja el botón "Atrás" de Android
+    return PopScope(
+      canPop: _selectedPatientId == null,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        if (_selectedPatientId != null) {
+          showPatientList();
+        }
+      },
+      child: Scaffold(
+        bottomNavigationBar: _PsychologistBottomNavInternal(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+        ),
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            _buildHomePage(),
+            _buildPatientsTab(), 
+            _buildCrisisAlertsPage(),
+            _buildLibraryPlaceholder(),
+            _buildProfilePage(),
+          ],
+        ),
       ),
     );
   }
@@ -83,15 +122,6 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
           child: const PsychologistHomePage(),
         );
       },
-    );
-  }
-
-  Widget _buildPatientListPlaceholder() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mis Pacientes')),
-      body: const Center(
-        child: Text('TODO: Therapy team - Implementar PsychologistPatientListPage'),
-      ),
     );
   }
 
@@ -130,6 +160,105 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPatientsTab() {
+    // Si hay un ID seleccionado, mostramos el detalle, si no, la lista.
+    if (_selectedPatientId != null) {
+      // Envolvemos en un sub-scaffold o container para manejar el botón atrás en la AppBar si es necesario
+      return _buildPatientDetailPage(_selectedPatientId!);
+    }
+    return _buildPatientListPage();
+  }
+
+  // Patient Detail Screen =====
+  Widget _buildPatientListPage() {
+    return FutureBuilder(
+      future: _initPatientListDeps(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Mis Pacientes')),
+            body: Center(
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
+        }
+
+        return snapshot.data ?? const Scaffold(
+          body: Center(child: Text('Error al cargar')),
+        );
+      },
+    );
+  }
+
+  Future<Widget> _initPatientListDeps() async {
+    final userSession = UserSession();
+    final user = await userSession.getUser();
+
+    if (user?.token == null) {
+      return const Center(child: Text('Error: No hay sesión activa'));
+    }
+
+    final httpClient = HttpClient(token: user!.token);
+    final therapyService = TherapyService(httpClient: httpClient);
+    final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+    final getPatientDirectoryUseCase = GetPatientDirectoryUseCase(therapyRepository);
+
+    return BlocProvider(
+      create: (context) => PatientListBloc(
+        getPatientDirectoryUseCase: getPatientDirectoryUseCase,
+      )..add(LoadPatients()),
+      child: const PatientListPage(),
+    );
+  }
+
+  // ===== MOVIDO DESDE NAVIGATION =====
+  Widget _buildPatientDetailPage(String patientId) {
+    return FutureBuilder(
+      future: _initPatientDetailDeps(patientId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (snapshot.hasError) {
+          return Scaffold(body: Center(child: Text('Error: ${snapshot.error}')));
+        }
+        return snapshot.data ?? const Scaffold(body: Center(child: Text('Error al cargar')));
+      },
+    );
+  }
+
+  Future<Widget> _initPatientDetailDeps(String patientId) async {
+    final userSession = UserSession();
+    final user = await userSession.getUser();
+    
+    if (user?.token == null) {
+      return const Scaffold(body: Center(child: Text('Error: No hay sesión activa')));
+    }
+
+    final httpClient = HttpClient(token: user!.token);
+    final therapyService = TherapyService(httpClient: httpClient);
+    final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+    final getPatientProfileUseCase = GetPatientProfileUseCase(therapyRepository);
+    final getPatientCheckInsUseCase = GetPatientCheckInsUseCase(therapyRepository);
+    final assignmentsService = AssignmentsService(httpClient: httpClient);
+
+    return BlocProvider(
+      create: (context) => PatientDetailBloc(
+        getPatientProfileUseCase: getPatientProfileUseCase,
+        getPatientCheckInsUseCase: getPatientCheckInsUseCase,
+        therapyRepository: therapyRepository,
+        assignmentsService: assignmentsService,
+      )..add(LoadPatientDetail(patientId)),
+      child: PatientDetailPage(patientId: patientId),
     );
   }
 

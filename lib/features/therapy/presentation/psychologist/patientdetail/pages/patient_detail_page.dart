@@ -11,6 +11,7 @@ import '../widgets/last_check_in_card.dart';
 import '../widgets/evolution_chart.dart';
 import '../widgets/task_card.dart';
 import '../../../../../../core/navigation/route.dart';
+import '../../../../../../core/ui/components/navigation/psychologist_scaffold.dart';
 
 class PatientDetailPage extends StatefulWidget {
   final String patientId;
@@ -65,7 +66,17 @@ class _PatientDetailPageState extends State<PatientDetailPage>
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: black),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            final scaffoldState = context.findAncestorStateOfType<PsychologistScaffoldState>();
+            if (scaffoldState != null) {
+              scaffoldState.showPatientList();
+            } else {
+              // Fallback por seguridad (si se usara fuera del scaffold)
+              if (context.canPop()) {
+                context.pop();
+              }
+            }
+          },
         ),
         actions: const [
           SizedBox(width: 48),
@@ -140,7 +151,7 @@ class _PatientDetailPageState extends State<PatientDetailPage>
                   patientName: profile.fullName,
                   age: age,
                   profilePhotoUrl: profile.profilePhotoUrl,
-                  startDate: state.startDate,
+                  startDate: profile.createdAt,
                 ),
                 const SizedBox(height: 16),
                 _buildTabBar(),

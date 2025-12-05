@@ -13,7 +13,8 @@ import 'features/therapy/data/repositories/therapy_repository_impl.dart';
 import 'features/therapy/data/services/therapy_service.dart';
 import 'core/networking/http_client.dart';
 import 'core/utils/session_manager.dart';
-import 'core/data/local/local_user_data_source.dart'; // NUEVO
+import 'core/data/local/local_user_data_source.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'features/tracking/injection_container.dart' as tracking_di;
 import 'features/tracking/presentation/bloc/tracking_bloc.dart';
 import 'features/tracking/presentation/bloc/tracking_event.dart';
@@ -21,6 +22,9 @@ import 'features/notifications/injection_container.dart' as notifications_di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa el formato de fechas para español
+  await initializeDateFormatting('es_ES', null);
 
   // Inicializar servicios core
   await _initCoreServices();

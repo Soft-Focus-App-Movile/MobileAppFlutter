@@ -65,6 +65,7 @@ class PatientProfileResponseDto {
       fullName: fullName,
       profilePhotoUrl: profileImageUrl ?? "",
       dateOfBirth: dateOfBirth,
+      createdAt: createdAt
     );
   }
 }

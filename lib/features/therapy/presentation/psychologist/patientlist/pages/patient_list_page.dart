@@ -112,10 +112,7 @@ class PatientListPage extends StatelessWidget {
                   final patient = state.patients[index];
                   return PatientCard(
                     patient: patient,
-                    onTap: () {
-                      // TODO: Navigate to patient detail
-                      // context.push('/patient-detail/${patient.id}');
-                    },
+                    onTap: null,
                   );
                 },
               ),

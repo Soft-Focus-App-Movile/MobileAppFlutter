@@ -1,7 +1,7 @@
 // lib/features/therapy/presentation/psychologist/patientlist/widgets/patient_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../../../core/ui/components/navigation/psychologist_scaffold.dart';
 import '../../../../../../core/ui/colors.dart';
 import '../../../../../../core/ui/text_styles.dart';
 import '../../../../../../core/widgets/profile_avatar.dart';
@@ -32,7 +32,15 @@ class PatientCard extends StatelessWidget {
       color: const Color(0xFFF7F7F3),
       child: InkWell(
         onTap: onTap ?? () {
-          context.push('/psychologist_patient_detail/${patient.patientId}');
+          // Buscamos el estado del Scaffold padre
+          final scaffoldState = context.findAncestorStateOfType<PsychologistScaffoldState>();
+          if (scaffoldState != null) {
+            // Navegación interna manteniendo el BottomBar
+            scaffoldState.showPatientDetail(patient.patientId);
+          } else {
+            // Fallback por si acaso (aunque la ruta ya no existe)
+            print("Error: No se encontró PsychologistScaffoldState");
+          }
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
