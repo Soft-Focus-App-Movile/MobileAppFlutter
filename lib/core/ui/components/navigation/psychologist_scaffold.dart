@@ -14,9 +14,13 @@ import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_aler
 import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
 import '../../../../features/crisis/data/repositories/crisis_repository_impl.dart';
 import '../../../../features/crisis/data/remote/crisis_service.dart';
+
 import '../../../../features/home/presentation/blocs/psychologist_home/psychologist_home_bloc.dart';
 import '../../../../features/home/presentation/blocs/psychologist_home/psychologist_home_event.dart';
 import '../../../../features/psychologist/data/remote/psychologist_service.dart';
+
+import '../../../../features/library/presentation/pages/library_page.dart';
+
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
 import '../../../navigation/route.dart';
@@ -130,12 +134,7 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
   }
 
   Widget _buildLibraryPlaceholder() {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Biblioteca')),
-      body: const Center(
-        child: Text('TODO: Library team - Implementar LibraryPage'),
-      ),
-    );
+    return const LibraryPage();
   }
 
   Widget _buildProfilePage() {

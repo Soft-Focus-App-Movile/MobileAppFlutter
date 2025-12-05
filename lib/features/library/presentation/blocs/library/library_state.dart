@@ -11,6 +11,7 @@ class LibraryState {
   final List<ContentUi> contents;
   final Set<String> favoriteIds;
   final Map<String, String> favoriteIdMap;
+  final Set<String> selectedContentIds;
   final String? message;
   final int currentPage;
   final int totalPages;
@@ -25,6 +26,7 @@ class LibraryState {
     this.contents = const [],
     this.favoriteIds = const {},
     this.favoriteIdMap = const {},
+    this.selectedContentIds = const {},
     this.message,
     this.currentPage = 1,
     this.totalPages = 1,
@@ -43,6 +45,7 @@ class LibraryState {
     List<ContentUi>? contents,
     Set<String>? favoriteIds,
     Map<String, String>? favoriteIdMap,
+    Set<String>? selectedContentIds,
     String? message,
     int? currentPage,
     int? totalPages,
@@ -57,6 +60,7 @@ class LibraryState {
       contents: contents ?? this.contents,
       favoriteIds: favoriteIds ?? this.favoriteIds,
       favoriteIdMap: favoriteIdMap ?? this.favoriteIdMap,
+      selectedContentIds: selectedContentIds ?? this.selectedContentIds,
       message: message ?? this.message,
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,

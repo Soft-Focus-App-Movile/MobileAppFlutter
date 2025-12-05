@@ -34,6 +34,8 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<ToggleFavoritesFilter>(_onToggleFavoritesFilter);
     on<SelectVideoCategory>(_onSelectVideoCategory);
     on<LoadRecommendations>(_onLoadRecommendations);
+    on<ToggleContentSelection>(_onToggleContentSelection);
+    on<ClearSelection>(_onClearSelection);
   }
 
   Future<void> _onSearchContent(
@@ -300,5 +302,27 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         message: e.toString(),
       ));
     }
+  }
+
+  Future<void> _onToggleContentSelection(
+    ToggleContentSelection event,
+    Emitter<LibraryState> emit,
+  ) async {
+    final updatedSelection = Set<String>.from(state.selectedContentIds);
+
+    if (updatedSelection.contains(event.contentId)) {
+      updatedSelection.remove(event.contentId);
+    } else {
+      updatedSelection.add(event.contentId);
+    }
+
+    emit(state.copyWith(selectedContentIds: updatedSelection));
+  }
+
+  Future<void> _onClearSelection(
+    ClearSelection event,
+    Emitter<LibraryState> emit,
+  ) async {
+    emit(state.copyWith(selectedContentIds: {}));
   }
 }

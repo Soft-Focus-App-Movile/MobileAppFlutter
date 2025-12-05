@@ -21,7 +21,6 @@ import '../../features/profiles/data/repositories/profile_repository_impl.dart';
 import '../../features/profiles/data/remote/profile_service.dart';
 import '../../features/psychologist/data/remote/psychologist_service.dart';
 import '../../features/psychologist/data/repositories/psychologist_repository_impl.dart';
-// NUEVO: Importar notificaciones
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
 import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
@@ -33,8 +32,11 @@ import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_blo
 import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
 import '../../features/crisis/data/repositories/crisis_repository_impl.dart';
 import '../../features/crisis/data/remote/crisis_service.dart';
+
 import '../../features/home/presentation/blocs/psychologist_home/psychologist_home_bloc.dart';
 import '../../features/home/presentation/blocs/psychologist_home/psychologist_home_event.dart';
+
+import '../../features/library/presentation/pages/library_page.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -103,6 +105,15 @@ List<RouteBase> psychologistRoutes() {
     ),
 
     // ========== FIN RUTAS DE NOTIFICACIONES ==========
+
+    // Library Screen
+    GoRoute(
+      path: AppRoute.library.path,
+      name: 'psychologist_library',
+      builder: (context, state) {
+        return const LibraryPage();
+      },
+    ),
 
     // Psychologist Profile Screen
     GoRoute(

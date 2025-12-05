@@ -46,3 +46,13 @@ class SelectVideoCategory extends LibraryEvent {
 class LoadRecommendations extends LibraryEvent {
   const LoadRecommendations();
 }
+
+class ToggleContentSelection extends LibraryEvent {
+  final String contentId;
+
+  const ToggleContentSelection({required this.contentId});
+}
+
+class ClearSelection extends LibraryEvent {
+  const ClearSelection();
+}

@@ -8,6 +8,7 @@ class ContentCard extends StatelessWidget {
   final ContentUi contentUi;
   final bool isSelected;
   final bool isSelectionMode;
+  final bool isPsychologist;
   final VoidCallback onFavoriteClick;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -17,6 +18,7 @@ class ContentCard extends StatelessWidget {
     required this.contentUi,
     this.isSelected = false,
     this.isSelectionMode = false,
+    this.isPsychologist = false,
     required this.onFavoriteClick,
     required this.onTap,
     required this.onLongPress,
@@ -25,11 +27,11 @@ class ContentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = contentUi.content;
-    final canFavorite = content.isMovie || content.isMusic;
+    final canFavorite = !isPsychologist && (content.isMovie || content.isMusic);
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: isPsychologist ? onLongPress : null,
       child: SizedBox(
         width: 160,
         child: Column(

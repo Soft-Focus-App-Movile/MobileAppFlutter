@@ -2,11 +2,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/common/result.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/common/status.dart';
 import '../../../../core/networking/http_client.dart';
+import '../../../../core/ui/text_styles.dart';
 import '../../../auth/data/local/user_session.dart';
 import '../../../auth/domain/models/user_type.dart';
+import '../../../therapy/data/services/therapy_service.dart';
+import '../../../therapy/data/repositories/therapy_repository_impl.dart';
+import '../../../therapy/domain/models/patient_directory_item.dart';
+import '../../data/models/request/assignment_request_dto.dart';
 import '../../data/services/content_search_service.dart';
 import '../../data/services/recommendations_service.dart';
 import '../../data/services/favorites_service.dart';
@@ -24,6 +30,7 @@ import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/content_card.dart';
 import '../widgets/assignments_tab.dart';
 import '../widgets/video_category_selector.dart';
+import '../widgets/assign_patient_bottom_sheet.dart';
 import 'content_detail_page.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -41,6 +48,9 @@ class _LibraryPageState extends State<LibraryPage> {
   String _searchQuery = '';
   HttpClient? _httpClient;
   Timer? _debounceTimer;
+  List<PatientDirectoryItem> _patients = [];
+  bool _patientsLoading = false;
+  String? _patientsError;
 
   @override
   void initState() {
@@ -75,6 +85,140 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   bool get _isPatient => _userType == UserType.PATIENT;
+  bool get _isPsychologist => _userType == UserType.PSYCHOLOGIST;
+
+  Future<void> _loadPatients() async {
+    setState(() {
+      _patientsLoading = true;
+      _patientsError = null;
+    });
+
+    try {
+      final therapyService = TherapyService(httpClient: _httpClient);
+      final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+      final result = await therapyRepository.getPatientDirectory();
+
+      switch (result) {
+        case Success(data: final patients):
+          setState(() {
+            _patients = patients;
+            _patientsLoading = false;
+          });
+        case Error(message: final error):
+          setState(() {
+            _patientsError = error;
+            _patientsLoading = false;
+          });
+      }
+    } catch (e) {
+      setState(() {
+        _patientsError = e.toString();
+        _patientsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _assignContent(BuildContext context, LibraryBloc libraryBloc, String patientId, String patientName) async {
+    try {
+      final selectedIds = libraryBloc.state.selectedContentIds;
+      final contents = libraryBloc.state.contents
+          .where((contentUi) => selectedIds.contains(contentUi.content.externalId))
+          .toList();
+
+      final assignmentsService = AssignmentsService(httpClient: _httpClient);
+
+      int successCount = 0;
+      for (final contentUi in contents) {
+        try {
+          final request = AssignmentRequestDto(
+            patientIds: [patientId],
+            contentId: contentUi.content.externalId,
+            contentType: contentUi.content.type,
+            notes: '',
+          );
+
+          await assignmentsService.assignContent(request);
+          successCount++;
+        } catch (e) {
+          print('Error asignando ${contentUi.content.title}: $e');
+        }
+      }
+
+      if (context.mounted) {
+        context.read<LibraryBloc>().add(const ClearSelection());
+        if (successCount == contents.length) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: green49),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$successCount contenido(s) asignado(s) a $patientName',
+                      style: const TextStyle(color: white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: gray2C,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Solo $successCount de ${contents.length} contenido(s) asignado(s)',
+                      style: const TextStyle(color: white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: gray2C,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error general en _assignContent: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Error: ${e.toString()}',
+                    style: const TextStyle(color: white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: gray2C,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,13 +255,19 @@ class _LibraryPageState extends State<LibraryPage> {
       ],
       child: Builder(
         builder: (context) {
-          return Scaffold(
-            backgroundColor: black,
-            appBar: LibraryTopBar(
-              isPsychologist: _userType == UserType.PSYCHOLOGIST,
-              isSelectionMode: false,
-              onCancelSelection: () {},
-            ),
+          return BlocBuilder<LibraryBloc, LibraryState>(
+            builder: (context, libraryState) {
+              final isSelectionMode = _isPsychologist && libraryState.selectedContentIds.isNotEmpty;
+
+              return Scaffold(
+                backgroundColor: black,
+                appBar: LibraryTopBar(
+                  isPsychologist: _isPsychologist,
+                  isSelectionMode: isSelectionMode,
+                  onCancelSelection: () {
+                    context.read<LibraryBloc>().add(const ClearSelection());
+                  },
+                ),
             body: Column(
               children: [
                 LibraryTabs(
@@ -238,6 +388,9 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               ],
             ),
+            floatingActionButton: _buildFloatingActionButton(context, libraryState),
+          );
+            },
           );
         },
       ),
@@ -287,6 +440,8 @@ class _LibraryPageState extends State<LibraryPage> {
               );
             }
 
+            final isSelectionMode = _isPsychologist && state.selectedContentIds.isNotEmpty;
+
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<LibraryBloc>().add(
@@ -304,16 +459,33 @@ class _LibraryPageState extends State<LibraryPage> {
                 itemCount: state.contents.length,
                 itemBuilder: (context, index) {
                   final contentUi = state.contents[index];
+                  final isSelected = state.selectedContentIds.contains(contentUi.content.externalId);
+
                   return ContentCard(
                     contentUi: contentUi,
-                    isSelected: false,
-                    isSelectionMode: false,
+                    isSelected: isSelected,
+                    isSelectionMode: isSelectionMode,
+                    isPsychologist: _isPsychologist,
                     onFavoriteClick: () {
                       context.read<LibraryBloc>().add(
                             ToggleFavorite(content: contentUi.content),
                           );
                     },
                     onTap: () async {
+                      if (_isPsychologist) {
+                        context.read<LibraryBloc>().add(
+                              ToggleContentSelection(contentId: contentUi.content.externalId),
+                            );
+                        return;
+                      }
+
+                      if (isSelectionMode) {
+                        context.read<LibraryBloc>().add(
+                              ToggleContentSelection(contentId: contentUi.content.externalId),
+                            );
+                        return;
+                      }
+
                       final content = contentUi.content;
 
                       if (content.isVideo) {
@@ -367,7 +539,13 @@ class _LibraryPageState extends State<LibraryPage> {
                         }
                       }
                     },
-                    onLongPress: () {},
+                    onLongPress: () {
+                      if (_isPsychologist) {
+                        context.read<LibraryBloc>().add(
+                              ToggleContentSelection(contentId: contentUi.content.externalId),
+                            );
+                      }
+                    },
                   );
                 },
               ),
@@ -377,6 +555,44 @@ class _LibraryPageState extends State<LibraryPage> {
             return const SizedBox.shrink();
         }
       },
+    );
+  }
+
+  Widget _buildFloatingActionButton(BuildContext context, LibraryState libraryState) {
+    if (!_isPsychologist || libraryState.selectedContentIds.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return FloatingActionButton.extended(
+      onPressed: () async {
+        await _loadPatients();
+        if (context.mounted) {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (bottomSheetContext) => AssignPatientBottomSheet(
+            selectedCount: libraryState.selectedContentIds.length,
+            patients: _patients,
+            isLoading: _patientsLoading,
+            errorMessage: _patientsError,
+            onPatientSelected: (patientId, patientName) {
+              _assignContent(context, context.read<LibraryBloc>(), patientId, patientName);
+            },
+            onDismiss: () {
+              Navigator.pop(bottomSheetContext);
+            },
+            onRetry: _loadPatients,
+          ),
+        );
+        }
+      },
+      backgroundColor: green49,
+      icon: const Icon(Icons.assignment, color: black),
+      label: Text(
+        'Asignar (${libraryState.selectedContentIds.length})',
+        style: sourceSansSemiBold.copyWith(color: black, fontSize: 15),
+      ),
     );
   }
 }
