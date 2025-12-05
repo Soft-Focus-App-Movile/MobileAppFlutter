@@ -5,13 +5,17 @@ import '../../../../../core/ui/colors.dart';
 import '../../../../../core/ui/text_styles.dart';
 import '../../blocs/psychologist_profile/psychologist_profile_bloc.dart';
 import '../../blocs/psychologist_profile/psychologist_profile_state.dart';
+import '../../../../psychologist/data/remote/psychologist_service.dart';
+import '../../../../psychologist/domain/models/psychologist_stats.dart';
 
 class PsychologistStatsPage extends StatefulWidget {
   final VoidCallback onNavigateBack;
+  final PsychologistService psychologistService;
 
   const PsychologistStatsPage({
     super.key,
     required this.onNavigateBack,
+    required this.psychologistService,
   });
 
   @override
@@ -22,6 +26,15 @@ class _PsychologistStatsPageState extends State<PsychologistStatsPage> {
   String? _fromDate;
   String? _toDate;
   bool _isRefreshing = false;
+  PsychologistStats? _stats;
+  bool _isLoadingStats = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
 
   Future<void> _selectFromDate() async {
     final picked = await showDatePicker(
@@ -84,17 +97,53 @@ class _PsychologistStatsPageState extends State<PsychologistStatsPage> {
     });
   }
 
-  void _applyFilter() {
-    // TODO: Implementar la lógica de filtrado con el repositorio
+  Future<void> _loadStats() async {
     setState(() {
-      _isRefreshing = true;
+      _isLoadingStats = true;
+      _errorMessage = null;
     });
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _isRefreshing = false;
-      });
-    });
+    try {
+      final statsDto = await widget.psychologistService.getStats(
+        fromDate: _fromDate,
+        toDate: _toDate,
+      );
+
+      if (mounted) {
+        setState(() {
+          _stats = statsDto.toDomain();
+          _isLoadingStats = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoadingStats = false;
+        });
+      }
+    }
+  }
+
+  void _applyFilter() {
+    _loadStats();
+  }
+
+  String _getEmotionalEmoji(double level) {
+    if (level <= 2.0) return '😡';
+    if (level <= 4.0) return '😢';
+    if (level <= 6.0) return '😐';
+    if (level <= 8.0) return '😊';
+    return '😁';
+  }
+
+  String _formatStatsDate(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
+    } catch (e) {
+      return DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+    }
   }
 
   @override
@@ -116,16 +165,7 @@ class _PsychologistStatsPageState extends State<PsychologistStatsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: green65),
-            onPressed: _isRefreshing ? null : () {
-              setState(() {
-                _isRefreshing = true;
-              });
-              Future.delayed(const Duration(milliseconds: 500), () {
-                setState(() {
-                  _isRefreshing = false;
-                });
-              });
-            },
+            onPressed: _isLoadingStats ? null : _loadStats,
           ),
         ],
         backgroundColor: white,
@@ -144,100 +184,144 @@ class _PsychologistStatsPageState extends State<PsychologistStatsPage> {
             const SizedBox(height: 24),
 
             // Estadísticas
-            BlocBuilder<PsychologistProfileBloc, PsychologistProfileState>(
-              builder: (context, state) {
-                final profile = state is PsychologistProfileSuccess ? state.profile : null;
-
-                if (_isRefreshing) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: green65),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: [
-                    // Card: Pacientes Activos
-                    _buildStatsCard(
-                      icon: Icons.people,
-                      title: 'Pacientes Activos',
-                      value: profile?.currentPatientsCount?.toString() ?? '-',
-                      subtitle: profile?.currentPatientsCount != null && profile!.currentPatientsCount! > 0
-                          ? 'Pacientes en tratamiento activo'
-                          : 'No tienes pacientes activos',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card: Alertas Pendientes
-                    _buildStatsCard(
-                      icon: Icons.warning_amber_rounded,
-                      title: 'Alertas de Crisis Pendientes',
-                      value: '-',
-                      subtitle: 'No hay alertas pendientes',
-                      isAlert: false,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card: Check-ins Completados Hoy
-                    _buildStatsCard(
-                      icon: Icons.calendar_today,
-                      title: 'Check-ins Completados Hoy',
-                      value: '-',
-                      subtitle: 'Ningún paciente ha completado su check-in hoy',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card: Adherencia Promedio
-                    _buildStatsCard(
-                      icon: Icons.trending_up,
-                      title: 'Tasa de Adherencia (Últimos 30 días)',
-                      value: '-',
-                      subtitle: 'Sin datos de adherencia',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card: Pacientes Nuevos Este Mes
-                    _buildStatsCard(
-                      icon: Icons.person_add,
-                      title: 'Pacientes Nuevos Este Mes',
-                      value: '-',
-                      subtitle: 'No has recibido pacientes nuevos este mes',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Card: Estado Emocional Promedio
-                    _buildEmotionalCard(
-                      emoji: '😐',
-                      title: 'Estado Emocional Promedio',
-                      value: '-',
-                      maxValue: '10.0',
-                      subtitle: 'Sin datos de estado emocional',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Fecha de actualización
-                    Text(
-                      'Última actualización: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
-                      style: sourceSansRegular.copyWith(
-                        fontSize: 12,
-                        color: grayA2,
+            if (_isLoadingStats)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: CircularProgressIndicator(color: green65),
+                ),
+              )
+            else if (_errorMessage != null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error al cargar estadísticas',
+                        style: crimsonSemiBold.copyWith(
+                          fontSize: 18,
+                          color: Colors.red,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage!,
+                        style: sourceSansRegular.copyWith(
+                          fontSize: 14,
+                          color: gray828,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _loadStats,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: green65,
+                          foregroundColor: white,
+                        ),
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  // Card: Pacientes Activos
+                  _buildStatsCard(
+                    icon: Icons.people,
+                    title: 'Pacientes Activos',
+                    value: _stats?.activePatientsCount.toString() ?? '0',
+                    subtitle: _stats != null && _stats!.activePatientsCount > 0
+                        ? 'Pacientes en tratamiento activo'
+                        : 'No tienes pacientes activos',
+                  ),
 
-                    const SizedBox(height: 24),
-                  ],
-                );
-              },
-            ),
+                  const SizedBox(height: 16),
+
+                  // Card: Alertas Pendientes
+                  _buildStatsCard(
+                    icon: Icons.warning_amber_rounded,
+                    title: 'Alertas de Crisis Pendientes',
+                    value: _stats?.pendingCrisisAlerts.toString() ?? '0',
+                    subtitle: _stats != null && _stats!.pendingCrisisAlerts > 0
+                        ? '${_stats!.pendingCrisisAlerts} alertas pendientes'
+                        : 'No hay alertas pendientes',
+                    isAlert: _stats != null && _stats!.pendingCrisisAlerts > 0,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Card: Check-ins Completados Hoy
+                  _buildStatsCard(
+                    icon: Icons.calendar_today,
+                    title: 'Check-ins Completados Hoy',
+                    value: _stats?.todayCheckInsCompleted.toString() ?? '0',
+                    subtitle: _stats != null && _stats!.todayCheckInsCompleted > 0
+                        ? '${_stats!.todayCheckInsCompleted} pacientes completaron su check-in'
+                        : 'Ningún paciente ha completado su check-in hoy',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Card: Adherencia Promedio
+                  _buildStatsCard(
+                    icon: Icons.trending_up,
+                    title: 'Tasa de Adherencia (Últimos 30 días)',
+                    value: _stats != null ? '${_stats!.averageAdherenceRate.toStringAsFixed(1)}%' : '0%',
+                    subtitle: _stats != null && _stats!.averageAdherenceRate > 0
+                        ? 'Promedio de adherencia de tus pacientes'
+                        : 'Sin datos de adherencia',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Card: Pacientes Nuevos Este Mes
+                  _buildStatsCard(
+                    icon: Icons.person_add,
+                    title: 'Pacientes Nuevos Este Mes',
+                    value: _stats?.newPatientsThisMonth.toString() ?? '0',
+                    subtitle: _stats != null && _stats!.newPatientsThisMonth > 0
+                        ? '${_stats!.newPatientsThisMonth} pacientes nuevos'
+                        : 'No has recibido pacientes nuevos este mes',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Card: Estado Emocional Promedio
+                  _buildEmotionalCard(
+                    emoji: _getEmotionalEmoji(_stats?.averageEmotionalLevel ?? 0),
+                    title: 'Estado Emocional Promedio',
+                    value: _stats != null && _stats!.averageEmotionalLevel > 0
+                        ? _stats!.averageEmotionalLevel.toStringAsFixed(1)
+                        : '0.0',
+                    maxValue: '10.0',
+                    subtitle: _stats != null && _stats!.averageEmotionalLevel > 0
+                        ? 'Promedio de tus pacientes'
+                        : 'Sin datos de estado emocional',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Fecha de actualización
+                  Text(
+                    _stats != null
+                        ? 'Última actualización: ${_formatStatsDate(_stats!.statsGeneratedAt)}'
+                        : 'Última actualización: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+                    style: sourceSansRegular.copyWith(
+                      fontSize: 12,
+                      color: grayA2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
           ],
         ),
       ),

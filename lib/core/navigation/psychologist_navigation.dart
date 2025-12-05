@@ -306,6 +306,7 @@ List<RouteBase> psychologistRoutes() {
             final user = snapshot.data;
             final httpClient = HttpClient(token: user?.token);
             final profileService = ProfileService(httpClient: httpClient);
+            final psychologistService = PsychologistService(httpClient: httpClient);
             final therapyService = TherapyService(httpClient: httpClient);
             final therapyRepository = TherapyRepositoryImpl(service: therapyService);
             final profileRepository = ProfileRepositoryImpl(
@@ -321,6 +322,7 @@ List<RouteBase> psychologistRoutes() {
               )..add(LoadPsychologistProfile()),
               child: PsychologistStatsPage(
                 onNavigateBack: () => context.pop(),
+                psychologistService: psychologistService,
               ),
             );
           },

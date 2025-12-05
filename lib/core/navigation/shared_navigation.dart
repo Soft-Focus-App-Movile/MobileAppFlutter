@@ -218,20 +218,6 @@ List<RouteBase> sharedRoutes() {
       },
     ),
 
-    // Permissions Screen
-    GoRoute(
-      path: AppRoute.permissions.path,
-      name: 'permissions',
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Permisos')),
-          body: const Center(
-            child: Text('TODO: Implementar PermissionsPage si es necesario'),
-          ),
-        );
-      },
-    ),
-
     // Privacy Policy Screen
     GoRoute(
       path: AppRoute.privacyPolicy.path,
