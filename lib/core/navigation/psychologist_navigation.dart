@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_softfocus/features/therapy/domain/usecases/get_patient_check_ins_usecase.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -21,6 +22,12 @@ import '../../features/profiles/data/repositories/profile_repository_impl.dart';
 import '../../features/profiles/data/remote/profile_service.dart';
 import '../../features/psychologist/data/remote/psychologist_service.dart';
 import '../../features/psychologist/data/repositories/psychologist_repository_impl.dart';
+import '../../features/therapy/presentation/psychologist/patientdetail/pages/patient_detail_page.dart';
+import '../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_bloc.dart';
+import '../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_event.dart';
+import '../../features/therapy/domain/usecases/get_patient_profile_usecase.dart';
+import '../../features/therapy/domain/usecases/get_patient_check_ins_usecase.dart';
+import '../../features/library/data/services/assignments_service.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
 import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
@@ -78,7 +85,7 @@ List<RouteBase> psychologistRoutes() {
       },
     ),
 
-    // ========== NUEVAS RUTAS DE NOTIFICACIONES ==========
+    // ========== RUTAS DE NOTIFICACIONES ==========
     
     // Notifications List Screen
     GoRoute(
@@ -371,6 +378,38 @@ List<RouteBase> psychologistRoutes() {
       },
     ),
 
+    // ===== Patient Detail Screen =====
+    GoRoute(
+      path: '/psychologist_patient_detail/:patientId',
+      name: 'psychologist_patient_detail',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        
+        return FutureBuilder(
+          future: _buildPatientDetailPage(patientId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(
+                  child: Text('Error: ${snapshot.error}'),
+                ),
+              );
+            }
+
+            return snapshot.data ?? const Scaffold(
+              body: Center(child: Text('Error al cargar')),
+            );
+          },
+        );
+      },
+    ),
+
     // Crisis Alerts Screen
     GoRoute(
       path: AppRoute.crisisAlerts.path,
@@ -457,5 +496,36 @@ Future<Widget> _buildPatientListPage() async {
       getPatientDirectoryUseCase: getPatientDirectoryUseCase,
     )..add(LoadPatients()),
     child: const PatientListPage(),
+  );
+}
+
+// ===== NUEVA FUNCIÓN: Construir página de detalle de paciente =====
+Future<Widget> _buildPatientDetailPage(String patientId) async {
+  final userSession = UserSession();
+  final user = await userSession.getUser();
+  
+  if (user?.token == null) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Error: No hay sesión activa'),
+      ),
+    );
+  }
+
+  final httpClient = HttpClient(token: user!.token);
+  final therapyService = TherapyService(httpClient: httpClient);
+  final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+  final getPatientProfileUseCase = GetPatientProfileUseCase(therapyRepository);
+  final getPatientCheckInsUseCase = GetPatientCheckInsUseCase(therapyRepository);
+  final assignmentsService = AssignmentsService(httpClient: httpClient);
+
+  return BlocProvider(
+    create: (context) => PatientDetailBloc(
+      getPatientProfileUseCase: getPatientProfileUseCase,
+      getPatientCheckInsUseCase: getPatientCheckInsUseCase,
+      therapyRepository: therapyRepository,
+      assignmentsService: assignmentsService,
+    )..add(LoadPatientDetail(patientId)),
+    child: PatientDetailPage(patientId: patientId),
   );
 }

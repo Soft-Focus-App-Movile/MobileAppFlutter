@@ -54,6 +54,9 @@ sealed class AppRoute {
 
   // Therapy routes (Psychologist)
   static const psychologistPatientList = _PsychologistPatientListRoute();
+  static const psychologistPatientDetail = _PsychologistPatientDetailRoute();
+
+  // Therapy routes (Patient)
   static const patientPsychologistChat = _PatientPsychologistChatRoute();
   static const psychologistChatProfile = _PsychologistChatProfileRoute();
   static const crisisAlerts = _CrisisAlertsRoute();
@@ -214,6 +217,14 @@ class _PatientPlanRoute extends AppRoute {
 // Therapy routes
 class _PsychologistPatientListRoute extends AppRoute {
   const _PsychologistPatientListRoute() : super('/psychologist_patient_list');
+}
+
+class _PsychologistPatientDetailRoute extends AppRoute {
+  const _PsychologistPatientDetailRoute() : super('/psychologist_patient_detail/:patientId');
+  
+  String createRoute(String patientId) {
+    return '/psychologist_patient_detail/$patientId';
+  }
 }
 
 class _PatientPsychologistChatRoute extends AppRoute {

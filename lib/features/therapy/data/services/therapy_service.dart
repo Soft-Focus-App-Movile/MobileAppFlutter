@@ -8,6 +8,8 @@ import '../models/response/get_relationship_with_patient_response_dto.dart';
 import '../models/response/patient_directory_item_response_dto.dart';
 import '../models/request/send_chat_message_request_dto.dart';
 import '../models/response/chat_message_response_dto.dart';
+import '../../data/models/response/patient_profile_response_dto.dart';
+import '../models/response/check_in_history_response_dto.dart';
 
 /// Service for therapy-related API calls (connection and my-relationship only)
 class TherapyService {
@@ -73,6 +75,45 @@ class TherapyService {
           .toList();
     } else {
       throw Exception('Failed to get patient directory: ${response.body}');
+    }
+  }
+
+  /// Get details of a specific patient assigned to the psychologist
+  Future<PatientProfileResponseDto> getPatientDetails(String patientId) async {
+    final endpoint = 'users/psychologist/patient/$patientId';
+    final response = await _httpClient.get(endpoint);
+
+    if (response.statusCode == 200) {
+      return PatientProfileResponseDto.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to get patient details: ${response.body}');
+    }
+  }
+
+  /// Get patient check-in history
+  /// Endpoint: tracking/history/{userId} (Verificar ruta exacta en ApiConstants)
+  Future<CheckInHistoryResponseDto> getPatientCheckIns({
+    required String patientId,
+    required int page,
+    required int pageSize,
+    String? startDate,
+    String? endDate,
+  }) async {
+    // Construcción de query parameters
+    String queryParams = 'page=$page&pageSize=$pageSize';
+    if (startDate != null) queryParams += '&startDate=$startDate';
+    if (endDate != null) queryParams += '&endDate=$endDate';
+
+    // Asumiendo que la ruta base es 'tracking/patient-history' o similar.
+    // Reemplaza 'tracking/check-ins/history' con el valor real de ApiConstants.Tracking.PATIENT_CHECK_INS_HISTORY
+    final endpoint = 'tracking/check-ins/history/$patientId?$queryParams';
+    
+    final response = await _httpClient.get(endpoint);
+
+    if (response.statusCode == 200) {
+      return CheckInHistoryResponseDto.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to get patient check-ins: ${response.body}');
     }
   }
 

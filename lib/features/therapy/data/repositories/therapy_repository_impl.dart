@@ -8,6 +8,8 @@ import '../../domain/models/patient_directory_item.dart';
 import '../../domain/models/chat_message.dart';
 import '../models/request/send_chat_message_request_dto.dart';
 import '../services/chat_signalr_service.dart';
+import '../../domain/models/patient_profile.dart';
+import '../../../tracking/domain/entities/check_in.dart';
 
 class TherapyRepositoryImpl implements TherapyRepository {
   final TherapyService _therapyService;
@@ -71,6 +73,41 @@ class TherapyRepositoryImpl implements TherapyRepository {
     } catch (e) {
       final errorMessage = _extractErrorMessage(e);
       return Error(errorMessage);
+    }
+  }
+
+  @override
+  Future<Result<PatientProfile>> getPatientProfile(String patientId) async {
+    try {
+      final dto = await _therapyService.getPatientDetails(patientId);
+      return Success(dto.toDomain());
+    } catch (e) {
+      return Error(_extractErrorMessage(e));
+    }
+  }
+
+  @override
+  Future<Result<List<CheckIn>>> getPatientCheckIns({
+    required String patientId,
+    required int page,
+    required int pageSize,
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final responseDto = await _therapyService.getPatientCheckIns(
+        patientId: patientId,
+        page: page,
+        pageSize: pageSize,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      
+      // Mapeamos la lista de DTOs a entidades de dominio
+      final checkIns = responseDto.checkIns.map((dto) => dto.toDomain()).toList();
+      return Success(checkIns);
+    } catch (e) {
+      return Error(_extractErrorMessage(e));
     }
   }
 

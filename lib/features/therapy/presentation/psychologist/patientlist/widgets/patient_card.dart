@@ -1,6 +1,7 @@
 // lib/features/therapy/presentation/psychologist/patientlist/widgets/patient_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../../../core/ui/colors.dart';
 import '../../../../../../core/ui/text_styles.dart';
 import '../../../../../../core/widgets/profile_avatar.dart';
@@ -8,7 +9,7 @@ import '../../../../domain/models/patient_directory_item.dart';
 
 class PatientCard extends StatelessWidget {
   final PatientDirectoryItem patient;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const PatientCard({
     super.key,
@@ -30,7 +31,9 @@ class PatientCard extends StatelessWidget {
       ),
       color: const Color(0xFFF7F7F3),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap ?? () {
+          context.push('/psychologist_patient_detail/${patient.patientId}');
+        },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
