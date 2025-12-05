@@ -17,6 +17,7 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       final response = await _subscriptionService.getMySubscription();
       return response.toDomain();
     } catch (e) {
+      print('❌ Error en getMySubscription: $e');
       throw Exception('Error al obtener suscripción: ${_extractErrorMessage(e)}');
     }
   }

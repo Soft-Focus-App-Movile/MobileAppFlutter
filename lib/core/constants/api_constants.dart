@@ -198,9 +198,9 @@ class LibraryEndpoints {
 class SubscriptionEndpoints {
   SubscriptionEndpoints._();
 
-  static const String me = "subscription/me";
-  static const String usage = "subscription/usage";
-  static const String upgradeCheckout = "subscription/upgrade-checkout";
-  static const String checkoutSuccess = "subscription/checkout-success";
-  static const String initialize = "subscription/initialize";
+  static const String me = "subscriptions/me";
+  static const String usage = "subscriptions/usage";
+  static const String upgradeCheckout = "subscriptions/upgrade/checkout";
+  static const String checkoutSuccess = "subscriptions/checkout/success";
+  static const String initialize = "subscriptions/initialize";
 }

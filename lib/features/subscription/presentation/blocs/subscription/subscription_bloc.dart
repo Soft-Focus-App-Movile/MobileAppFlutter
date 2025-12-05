@@ -72,13 +72,38 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     HandleCheckoutSuccess event,
     Emitter<SubscriptionState> emit,
   ) async {
-    emit(SubscriptionLoading());
+    final currentState = state;
+
+    // Show loading but keep the current subscription visible
+    if (currentState is SubscriptionLoaded) {
+      emit(currentState.copyWith(isLoadingCheckout: true, clearCheckoutUrl: true));
+    } else {
+      emit(SubscriptionLoading());
+    }
+
     try {
+      print('🔄 Processing checkout success with sessionId: ${event.sessionId}');
+
       final subscription = await subscriptionRepository.handleCheckoutSuccess(
         sessionId: event.sessionId,
       );
-      emit(SubscriptionLoaded(subscription: subscription));
+
+      print('✅ Payment processed successfully. New plan: ${subscription.plan}, Status: ${subscription.status}');
+      print('✅ Subscription updated successfully to: ${subscription.plan}');
+
+      emit(SubscriptionLoaded(
+        subscription: subscription,
+        successMessage: '¡Pago exitoso! Ahora tienes el Plan Pro',
+        isLoadingCheckout: false,
+      ));
     } catch (e) {
+      print('❌ Error processing payment: $e');
+
+      // Close WebView even on error so user isn't stuck
+      if (currentState is SubscriptionLoaded) {
+        emit(currentState.copyWith(clearCheckoutUrl: true, isLoadingCheckout: false));
+      }
+
       emit(SubscriptionError(message: e.toString()));
     }
   }

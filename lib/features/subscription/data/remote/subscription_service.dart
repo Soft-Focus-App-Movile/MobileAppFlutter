@@ -13,9 +13,19 @@ class SubscriptionService {
       : _httpClient = httpClient ?? HttpClient();
 
   Future<SubscriptionResponseDto> getMySubscription() async {
+    print('🔍 Llamando a: ${SubscriptionEndpoints.me}');
     final response = await _httpClient.get(SubscriptionEndpoints.me);
+    print('📡 Status Code: ${response.statusCode}');
+    print('📦 Response Body: ${response.body}');
+
     if (response.statusCode == 200) {
-      return SubscriptionResponseDto.fromJson(jsonDecode(response.body));
+      try {
+        final json = jsonDecode(response.body);
+        return SubscriptionResponseDto.fromJson(json);
+      } catch (e) {
+        print('❌ Error al parsear JSON: $e');
+        throw Exception('Error al parsear respuesta: $e');
+      }
     } else {
       throw Exception('Error al obtener suscripción: ${response.body}');
     }

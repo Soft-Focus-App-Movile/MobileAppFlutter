@@ -12,12 +12,14 @@ class SubscriptionLoaded extends SubscriptionState {
   final UsageStats? usageStats;
   final String? checkoutUrl;
   final bool isLoadingCheckout;
+  final String? successMessage;
 
   SubscriptionLoaded({
     required this.subscription,
     this.usageStats,
     this.checkoutUrl,
     this.isLoadingCheckout = false,
+    this.successMessage,
   });
 
   SubscriptionLoaded copyWith({
@@ -26,12 +28,15 @@ class SubscriptionLoaded extends SubscriptionState {
     String? checkoutUrl,
     bool? isLoadingCheckout,
     bool clearCheckoutUrl = false,
+    String? successMessage,
+    bool clearSuccessMessage = false,
   }) {
     return SubscriptionLoaded(
       subscription: subscription ?? this.subscription,
       usageStats: usageStats ?? this.usageStats,
       checkoutUrl: clearCheckoutUrl ? null : (checkoutUrl ?? this.checkoutUrl),
       isLoadingCheckout: isLoadingCheckout ?? this.isLoadingCheckout,
+      successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
     );
   }
 }

@@ -13,12 +13,7 @@ class MyPlanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SubscriptionBloc(
-        subscriptionRepository: context.read(),
-      )..add(LoadSubscription()),
-      child: const _MyPlanPageContent(),
-    );
+    return const _MyPlanPageContent();
   }
 }
 
@@ -42,26 +37,61 @@ class _MyPlanPageContent extends StatelessWidget {
         iconTheme: IconThemeData(color: greenA3),
       ),
       body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
+        listenWhen: (previous, current) {
+          // Listen to checkout URL changes and success messages
+          if (previous is SubscriptionLoaded && current is SubscriptionLoaded) {
+            return previous.checkoutUrl != current.checkoutUrl ||
+                   previous.successMessage != current.successMessage;
+          }
+          return true;
+        },
         listener: (context, state) {
-          if (state is SubscriptionLoaded && state.checkoutUrl != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => _StripeCheckoutWebView(
-                  checkoutUrl: state.checkoutUrl!,
-                  onSuccess: (sessionId) {
-                    Navigator.pop(context);
-                    context.read<SubscriptionBloc>().add(
-                          HandleCheckoutSuccess(sessionId: sessionId),
-                        );
-                  },
-                  onCancel: () {
-                    Navigator.pop(context);
-                    context.read<SubscriptionBloc>().add(ClearCheckoutUrl());
-                  },
+          if (state is SubscriptionLoaded) {
+            if (state.checkoutUrl != null) {
+              print('🌐 Opening checkout WebView');
+
+              // Get the bloc reference BEFORE navigating
+              final bloc = context.read<SubscriptionBloc>();
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (webViewContext) => _StripeCheckoutWebView(
+                    checkoutUrl: state.checkoutUrl!,
+                    onSuccess: (sessionId) {
+                      print('💳 Payment success! SessionId: $sessionId');
+                      print('💳 Dispatching HandleCheckoutSuccess event...');
+
+                      // Close the WebView first
+                      Navigator.pop(webViewContext);
+
+                      // Then dispatch the event using the bloc reference we saved
+                      bloc.add(HandleCheckoutSuccess(sessionId: sessionId));
+                      print('💳 Event dispatched!');
+                    },
+                    onCancel: () {
+                      print('❌ Payment cancelled by user');
+
+                      // Close the WebView first
+                      Navigator.pop(webViewContext);
+
+                      // Then clear the checkout URL using the bloc reference we saved
+                      bloc.add(ClearCheckoutUrl());
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
+            }
+
+            if (state.successMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.successMessage!),
+                  backgroundColor: greenA3,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -175,8 +205,8 @@ class _PlanContent extends StatelessWidget {
                           _PlanFeature('Soporte estándar'),
                         ],
                 ),
-                if (!isPro) ...[
-                  const SizedBox(height: 32),
+                const SizedBox(height: 32),
+                if (!isPro)
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -212,8 +242,28 @@ class _PlanContent extends StatelessWidget {
                               style: crimsonSemiBold.copyWith(fontSize: 18),
                             ),
                     ),
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: null, // Deshabilitado por ahora
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: white, width: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Plan Pro Activo ✓',
+                        style: crimsonSemiBold.copyWith(
+                          fontSize: 18,
+                          color: white,
+                        ),
+                      ),
+                    ),
                   ),
-                ],
               ],
             ),
           ),
@@ -301,16 +351,32 @@ class _StripeCheckoutWebViewState extends State<_StripeCheckoutWebView> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (String url) {
+          onNavigationRequest: (NavigationRequest request) {
+            final url = request.url;
+            print('🌐 Navigation requested: $url');
+
             if (url.contains('softfocus://subscription/success')) {
               final uri = Uri.parse(url);
               final sessionId = uri.queryParameters['session_id'];
+
+              print('✅ Payment success detected! SessionId: $sessionId');
+
               if (sessionId != null) {
                 widget.onSuccess(sessionId);
+              } else {
+                print('❌ Success URL detected but no session_id found!');
               }
+              // Prevent the WebView from loading this URL
+              return NavigationDecision.prevent;
             } else if (url.contains('softfocus://subscription/cancel')) {
+              print('❌ Payment cancellation detected');
               widget.onCancel();
+              // Prevent the WebView from loading this URL
+              return NavigationDecision.prevent;
             }
+
+            // Allow normal navigation for Stripe URLs
+            return NavigationDecision.navigate;
           },
           onPageFinished: (String url) {
             setState(() {

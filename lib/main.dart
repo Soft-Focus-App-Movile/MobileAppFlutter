@@ -11,9 +11,6 @@ import 'features/auth/presentation/blocs/register/register_bloc.dart';
 import 'features/home/presentation/blocs/home/home_bloc.dart';
 import 'features/therapy/data/repositories/therapy_repository_impl.dart';
 import 'features/therapy/data/services/therapy_service.dart';
-import 'features/subscription/data/repositories/subscription_repository_impl.dart';
-import 'features/subscription/data/remote/subscription_service.dart';
-import 'features/subscription/domain/repositories/subscription_repository.dart';
 import 'core/networking/http_client.dart';
 import 'core/utils/session_manager.dart';
 import 'core/data/local/local_user_data_source.dart';
@@ -59,15 +56,6 @@ Future<void> _initCoreServices() async {
   if (!sl.isRegistered<LocalUserDataSource>()) {
     sl.registerLazySingleton(() => LocalUserDataSource());
   }
-
-  // Registrar SubscriptionRepository como singleton
-  if (!sl.isRegistered<SubscriptionRepository>()) {
-    sl.registerLazySingleton<SubscriptionRepository>(
-      () => SubscriptionRepositoryImpl(
-        service: SubscriptionService(httpClient: sl<HttpClient>()),
-      ),
-    );
-  }
 }
 
 class MainApp extends StatelessWidget {
@@ -95,39 +83,32 @@ class MainApp extends StatelessWidget {
     final localUserDataSource = LocalUserDataSource();
 
     return ProviderScope(
-      child: MultiRepositoryProvider(
+      child: MultiBlocProvider(
         providers: [
-          RepositoryProvider<SubscriptionRepository>(
-            create: (context) => GetIt.instance<SubscriptionRepository>(),
+          BlocProvider(
+            create: (context) => LoginBloc(repository: authRepository),
+          ),
+          BlocProvider(
+            create: (context) => RegisterBloc(repository: authRepository),
+          ),
+          BlocProvider(
+            create: (context) => HomeBloc(
+              therapyRepository: therapyRepository,
+              localUserDataSource: localUserDataSource,
+            ),
+          ),
+          BlocProvider<TrackingBloc>(
+            create: (context) => tracking_di.sl<TrackingBloc>()
+              ..add(LoadInitialDataEvent()),
           ),
         ],
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (context) => LoginBloc(repository: authRepository),
-            ),
-            BlocProvider(
-              create: (context) => RegisterBloc(repository: authRepository),
-            ),
-            BlocProvider(
-              create: (context) => HomeBloc(
-                therapyRepository: therapyRepository,
-                localUserDataSource: localUserDataSource,
-              ),
-            ),
-            BlocProvider<TrackingBloc>(
-              create: (context) => tracking_di.sl<TrackingBloc>()
-                ..add(LoadInitialDataEvent()),
-            ),
-          ],
-          child: MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Soft Focus',
-            theme: lightTheme,
-            darkTheme: darkTheme,
-            themeMode: ThemeMode.system,
-            routerConfig: AppNavigation.createRouter(),
-          ),
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'Soft Focus',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.system,
+          routerConfig: AppNavigation.createRouter(),
         ),
       ),
     );
