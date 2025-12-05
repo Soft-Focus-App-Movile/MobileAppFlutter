@@ -33,6 +33,8 @@ import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_blo
 import '../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
 import '../../features/crisis/data/repositories/crisis_repository_impl.dart';
 import '../../features/crisis/data/remote/crisis_service.dart';
+import '../../features/home/presentation/blocs/psychologist_home/psychologist_home_bloc.dart';
+import '../../features/home/presentation/blocs/psychologist_home/psychologist_home_event.dart';
 import 'route.dart';
 
 /// Psychologist user navigation graph.
@@ -43,7 +45,35 @@ List<RouteBase> psychologistRoutes() {
     GoRoute(
       path: '/psychologist_home',
       name: 'psychologist_home',
-      builder: (context, state) => const PsychologistHomePage(),
+      builder: (context, state) {
+        final userSession = UserSession();
+
+        return FutureBuilder(
+          future: userSession.getUser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final user = snapshot.data;
+            final httpClient = HttpClient(token: user?.token);
+
+            // Crear todos los servicios necesarios con el token
+            final psychologistService = PsychologistService(httpClient: httpClient);
+            final therapyService = TherapyService(httpClient: httpClient);
+
+            return BlocProvider(
+              create: (context) => PsychologistHomeBloc(
+                psychologistService: psychologistService,
+                therapyService: therapyService,
+              )..add(LoadPsychologistHomeData()),
+              child: const PsychologistHomePage(),
+            );
+          },
+        );
+      },
     ),
 
     // ========== NUEVAS RUTAS DE NOTIFICACIONES ==========
@@ -276,6 +306,7 @@ List<RouteBase> psychologistRoutes() {
             final user = snapshot.data;
             final httpClient = HttpClient(token: user?.token);
             final profileService = ProfileService(httpClient: httpClient);
+            final psychologistService = PsychologistService(httpClient: httpClient);
             final therapyService = TherapyService(httpClient: httpClient);
             final therapyRepository = TherapyRepositoryImpl(service: therapyService);
             final profileRepository = ProfileRepositoryImpl(
@@ -291,6 +322,7 @@ List<RouteBase> psychologistRoutes() {
               )..add(LoadPsychologistProfile()),
               child: PsychologistStatsPage(
                 onNavigateBack: () => context.pop(),
+                psychologistService: psychologistService,
               ),
             );
           },

@@ -14,6 +14,9 @@ import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_aler
 import '../../../../features/crisis/presentation/blocs/crisis_alerts/crisis_alerts_event.dart';
 import '../../../../features/crisis/data/repositories/crisis_repository_impl.dart';
 import '../../../../features/crisis/data/remote/crisis_service.dart';
+import '../../../../features/home/presentation/blocs/psychologist_home/psychologist_home_bloc.dart';
+import '../../../../features/home/presentation/blocs/psychologist_home/psychologist_home_event.dart';
+import '../../../../features/psychologist/data/remote/psychologist_service.dart';
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
 import '../../../navigation/route.dart';
@@ -43,13 +46,39 @@ class _PsychologistScaffoldState extends State<PsychologistScaffold> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          const PsychologistHomePage(),
+          _buildHomePage(),
           _buildPatientListPlaceholder(),
           _buildCrisisAlertsPage(),
           _buildLibraryPlaceholder(),
           _buildProfilePage(),
         ],
       ),
+    );
+  }
+
+  Widget _buildHomePage() {
+    final userSession = UserSession();
+
+    return FutureBuilder(
+      future: userSession.getUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final user = snapshot.data;
+        final httpClient = HttpClient(token: user?.token);
+        final psychologistService = PsychologistService(httpClient: httpClient);
+        final therapyService = TherapyService(httpClient: httpClient);
+
+        return BlocProvider(
+          create: (context) => PsychologistHomeBloc(
+            psychologistService: psychologistService,
+            therapyService: therapyService,
+          )..add(LoadPsychologistHomeData()),
+          child: const PsychologistHomePage(),
+        );
+      },
     );
   }
 
