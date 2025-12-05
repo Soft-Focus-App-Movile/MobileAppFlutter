@@ -17,11 +17,11 @@ class StatItem {
 }
 
 String getEmotionalEmoji(double level) {
-  if (level <= 2.0) return 'assets/emojis/calendar_emoji_angry.png';
-  if (level <= 4.0) return 'assets/emojis/calendar_emoji_sad.png';
-  if (level <= 6.0) return 'assets/emojis/calendar_emoji_serius.png';
-  if (level <= 8.0) return 'assets/emojis/calendar_emoji_happy.png';
-  return 'assets/emojis/calendar_emoji_joy.png';
+  if (level <= 2.0) return 'assets/images/calendar_emoji_angry.png';
+  if (level <= 4.0) return 'assets/images/calendar_emoji_sad.png';
+  if (level <= 6.0) return 'assets/images/calendar_emoji_serius.png';
+  if (level <= 8.0) return 'assets/images/calendar_emoji_happy.png';
+  return 'assets/images/calendar_emoji_joy.png';
 }
 
 class StatsSection extends StatelessWidget {

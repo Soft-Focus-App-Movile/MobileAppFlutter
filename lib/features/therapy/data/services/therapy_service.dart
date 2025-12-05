@@ -131,6 +131,7 @@ class TherapyService {
     final response = await _httpClient.get(endpoint);
 
     if (response.statusCode == 200) {
+      print("CONTENIDO DEL BODY: ${response.body}");
       final List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((json) => ChatMessageResponseDto.fromJson(json)).toList();
     } else {

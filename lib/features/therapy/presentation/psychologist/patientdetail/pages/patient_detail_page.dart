@@ -176,21 +176,23 @@ class _PatientDetailPageState extends State<PatientDetailPage>
         unselectedLabelColor: gray808,
         labelStyle: sourceSansRegular.copyWith(fontSize: 17),
         onTap: (index) {
-          // Si el usuario toca "Chat", navegar a la pantalla de chat
+          // Si el usuario toca "Chat", navegar a la pantalla de chat dentro del Scaffold
           if (index == 2) {
+            // Evitamos que el TabController cambie visualmente al tab vacío
+            _tabController.index = _selectedTabIndex; 
+
             final state = context.read<PatientDetailBloc>().state;
             final profile = state.profile;
             
             if (profile != null) {
-              // TODO: Implementar navegación al chat
-              // context.push(
-              //   AppRoute.psychologistPatientChat.path,
-              //   extra: {
-              //     'patientId': widget.patientId,
-              //     'patientName': profile.fullName,
-              //     'profilePhotoUrl': profile.profilePhotoUrl,
-              //   },
-              // );
+              final scaffoldState = context.findAncestorStateOfType<PsychologistScaffoldState>();
+              if (scaffoldState != null) {
+                scaffoldState.showPatientChat(
+                  widget.patientId,
+                  profile.fullName,
+                  profile.profilePhotoUrl,
+                );
+              }
             }
           }
         },

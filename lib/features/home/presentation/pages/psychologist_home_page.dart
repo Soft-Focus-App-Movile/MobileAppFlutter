@@ -225,7 +225,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
                       imageAsset: state.stats!.averageEmotionalLevel > 0
                           ? getEmotionalEmoji(
                               state.stats!.averageEmotionalLevel)
-                          : 'assets/emojis/calendar_emoji_serius.png',
+                          : 'assets/images/calendar_emoji_serius.png',
                       title: 'Estado Emocional',
                       value: state.stats!.averageEmotionalLevel > 0
                           ? state.stats!.averageEmotionalLevel
@@ -250,7 +250,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
                       subtitle: 'Cargando...',
                     ),
                     StatItem(
-                      imageAsset: 'assets/emojis/calendar_emoji_serius.png',
+                      imageAsset: 'assets/images/calendar_emoji_serius.png',
                       title: 'Estado Emocional',
                       value: '-',
                       subtitle: 'Cargando...',

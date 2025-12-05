@@ -6,22 +6,23 @@ part 'chat_message_response_dto.g.dart';
 @JsonSerializable()
 class ChatMessageResponseDto {
   final String id;
-  @JsonKey(name: 'relationship_id')
-  final String relationshipId;
-  @JsonKey(name: 'sender_id')
+  
+  // ELIMINADO: @JsonKey(name: 'relationship_id')
+  final String relationshipId; 
+  
+  // ELIMINADO: @JsonKey(name: 'sender_id')
   final String senderId;
-  @JsonKey(name: 'receiver_id')
+  
+  // ELIMINADO: @JsonKey(name: 'receiver_id')
   final String receiverId;
-  // El backend devuelve un objeto MessageContent con una propiedad Value, o directamente el string dependiendo de la serialización final.
-  // Basado en ChatMessage.cs del backend, tiene un objeto MessageContent.
-  // Asumiremos que el serializador del backend aplana esto o devuelve el objeto.
-  // Si el JSON llega como { "content": { "value": "hola" } }, ajusta esto.
-  // Usualmente en DTOs de respuesta directa se aplana. Asumiré String simple por simplicidad o map dinámico.
+
   final dynamic content; 
   final String timestamp;
-  @JsonKey(name: 'is_read')
+  
+  // ELIMINADO: @JsonKey(name: 'is_read')
   final bool isRead;
-  @JsonKey(name: 'message_type')
+  
+  // ELIMINADO: @JsonKey(name: 'message_type')
   final String messageType;
 
   ChatMessageResponseDto({

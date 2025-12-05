@@ -19,3 +19,31 @@ class ChatMessage {
     this.messageType = 'text',
   });
 }
+
+extension ChatMessageComparison on ChatMessage {
+  bool isFromUser(String userId) {
+    return senderId == userId;
+  }
+  
+  ChatMessage copyWith({
+    String? id,
+    String? relationshipId,
+    String? senderId,
+    String? receiverId,
+    String? content,
+    DateTime? timestamp,
+    bool? isRead,
+    String? messageType,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      relationshipId: relationshipId ?? this.relationshipId,
+      senderId: senderId ?? this.senderId,
+      receiverId: receiverId ?? this.receiverId,
+      content: content ?? this.content,
+      timestamp: timestamp ?? this.timestamp,
+      isRead: isRead ?? this.isRead,
+      messageType: messageType ?? this.messageType,
+    );
+  }
+}
