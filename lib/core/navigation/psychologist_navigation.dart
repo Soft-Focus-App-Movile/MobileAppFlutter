@@ -34,6 +34,7 @@ import '../../features/therapy/domain/usecases/get_chat_history_usecase.dart';
 import '../../features/therapy/domain/usecases/send_chat_message_usecase.dart';
 
 import '../../features/library/data/services/assignments_service.dart';
+import '../../features/subscription/presentation/pages/my_plan_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
 import '../../features/notifications/presentation/blocs/notifications/notifications_bloc.dart';
@@ -301,13 +302,7 @@ List<RouteBase> psychologistRoutes() {
       path: AppRoute.psychologistPlan.path,
       name: 'psychologist_plan',
       builder: (context, state) {
-        // TODO: Subscription team - Implement PsychologistPlanPage
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mi Plan')),
-          body: const Center(
-            child: Text('TODO: Subscription team - Implementar PsychologistPlanPage'),
-          ),
-        );
+        return const MyPlanPage();
       },
     ),
 

@@ -193,3 +193,14 @@ class LibraryEndpoints {
   static String recommendByEmotionType(String emotion) =>
       recommendByEmotion.replaceAll("{emotion}", emotion);
 }
+
+// Subscription endpoints
+class SubscriptionEndpoints {
+  SubscriptionEndpoints._();
+
+  static const String me = "subscription/me";
+  static const String usage = "subscription/usage";
+  static const String upgradeCheckout = "subscription/upgrade-checkout";
+  static const String checkoutSuccess = "subscription/checkout-success";
+  static const String initialize = "subscription/initialize";
+}
