@@ -51,7 +51,14 @@ class Content {
   bool get isMusic => type.toLowerCase() == 'music';
   bool get isVideo => type.toLowerCase() == 'video';
 
-  String get posterImage => posterUrl ?? thumbnailUrl ?? backdropUrl ?? '';
+  String get posterImage {
+    // Para videos, priorizar thumbnailUrl ya que es más apropiado
+    if (isVideo) {
+      return thumbnailUrl ?? posterUrl ?? backdropUrl ?? '';
+    }
+    // Para películas y música, priorizar posterUrl
+    return posterUrl ?? thumbnailUrl ?? backdropUrl ?? '';
+  }
 
   String get backdropImage => backdropUrl ?? posterUrl ?? thumbnailUrl ?? '';
 

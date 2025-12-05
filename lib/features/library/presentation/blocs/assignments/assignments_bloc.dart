@@ -53,20 +53,9 @@ class AssignmentsBloc extends Bloc<AssignmentsEvent, AssignmentsState> {
     try {
       await _assignmentsService.completeAssignment(event.assignmentId);
 
-      final updatedAssignments = state.assignments.map((assignment) {
-        if (assignment.id == event.assignmentId) {
-          return Assignment(
-            id: assignment.id,
-            content: assignment.content,
-            psychologistId: assignment.psychologistId,
-            notes: assignment.notes,
-            assignedDate: assignment.assignedDate,
-            isCompleted: true,
-            completedDate: DateTime.now(),
-          );
-        }
-        return assignment;
-      }).toList();
+      final updatedAssignments = state.assignments
+          .where((assignment) => assignment.id != event.assignmentId)
+          .toList();
 
       emit(state.copyWith(
         assignments: updatedAssignments,
