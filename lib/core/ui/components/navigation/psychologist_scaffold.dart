@@ -300,7 +300,7 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
             onNavigateToInvitationCode: () => context.push(AppRoute.invitationCode.path),
             onNavigateToPlan: () => context.push(AppRoute.psychologistPlan.path),
             onNavigateToStats: () => context.push(AppRoute.psychologistStats.path),
-            onNavigateToNotifications: () => context.push(AppRoute.notifications.path),
+            onNavigateToNotifications: () => context.push(AppRoute.notificationPreferences.path),
             onLogout: () async {
               await userSession.clear();
               if (context.mounted) {

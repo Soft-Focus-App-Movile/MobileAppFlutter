@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_app_softfocus/core/navigation/route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
 import '../../../../core/widgets/invitation_card.dart';
@@ -123,7 +125,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
               size: 25,
             ),
             onPressed: () {
-              // TODO: Navigate to notifications
+              context.push(AppRoute.notifications.path);
             },
           ),
         ],
