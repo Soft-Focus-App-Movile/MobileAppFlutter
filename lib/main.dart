@@ -99,7 +99,7 @@ class MainApp extends StatelessWidget {
           ),
           BlocProvider<TrackingBloc>(
             create: (context) => tracking_di.sl<TrackingBloc>()
-              ..add(LoadInitialDataEvent()), // Carga datos iniciales
+              ..add(LoadInitialDataEvent()),
           ),
         ],
         child: MaterialApp.router(
