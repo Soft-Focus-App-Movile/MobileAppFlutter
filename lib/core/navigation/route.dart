@@ -55,6 +55,7 @@ sealed class AppRoute {
   // Therapy routes (Psychologist)
   static const psychologistPatientList = _PsychologistPatientListRoute();
   static const psychologistPatientDetail = _PsychologistPatientDetailRoute();
+  static const psychologistPatientChat = _PsychologistPatientChatRoute();
 
   // Therapy routes (Patient)
   static const patientPsychologistChat = _PatientPsychologistChatRoute();
@@ -224,6 +225,25 @@ class _PsychologistPatientDetailRoute extends AppRoute {
   
   String createRoute(String patientId) {
     return '/psychologist_patient_detail/$patientId';
+  }
+}
+
+class _PsychologistPatientChatRoute extends AppRoute {
+  const _PsychologistPatientChatRoute() : super('/psychologist_patient_chat/:patientId');
+  
+  String createRoute({
+    required String patientId,
+    required String patientName,
+    String? patientProfileUrl,
+  }) {
+    final uri = Uri(
+      path: '/psychologist_patient_chat/$patientId',
+      queryParameters: {
+        'patientName': patientName,
+        if (patientProfileUrl != null) 'patientProfileUrl': patientProfileUrl,
+      },
+    );
+    return uri.toString();
   }
 }
 

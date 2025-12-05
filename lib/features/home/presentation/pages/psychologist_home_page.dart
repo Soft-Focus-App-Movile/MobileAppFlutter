@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_app_softfocus/core/navigation/route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/ui/colors.dart';
 import '../../../../core/ui/text_styles.dart';
 import '../../../../core/widgets/invitation_card.dart';
@@ -123,7 +125,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
               size: 25,
             ),
             onPressed: () {
-              // TODO: Navigate to notifications
+              context.push(AppRoute.notifications.path);
             },
           ),
         ],
@@ -223,7 +225,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
                       imageAsset: state.stats!.averageEmotionalLevel > 0
                           ? getEmotionalEmoji(
                               state.stats!.averageEmotionalLevel)
-                          : 'assets/emojis/calendar_emoji_serius.png',
+                          : 'assets/images/calendar_emoji_serius.png',
                       title: 'Estado Emocional',
                       value: state.stats!.averageEmotionalLevel > 0
                           ? state.stats!.averageEmotionalLevel
@@ -248,7 +250,7 @@ class _PsychologistHomePageState extends State<PsychologistHomePage> {
                       subtitle: 'Cargando...',
                     ),
                     StatItem(
-                      imageAsset: 'assets/emojis/calendar_emoji_serius.png',
+                      imageAsset: 'assets/images/calendar_emoji_serius.png',
                       title: 'Estado Emocional',
                       value: '-',
                       subtitle: 'Cargando...',

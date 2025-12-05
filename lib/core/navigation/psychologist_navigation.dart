@@ -27,6 +27,12 @@ import '../../features/therapy/presentation/psychologist/patientdetail/blocs/pat
 import '../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_event.dart';
 import '../../features/therapy/domain/usecases/get_patient_profile_usecase.dart';
 import '../../features/therapy/domain/usecases/get_patient_check_ins_usecase.dart';
+import '../../features/therapy/presentation/psychologist/patientdetail/pages/patient_chat_page.dart';
+import '../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_chat_bloc.dart';
+import '../../features/therapy/domain/usecases/get_relationship_with_patient_usecase.dart';
+import '../../features/therapy/domain/usecases/get_chat_history_usecase.dart';
+import '../../features/therapy/domain/usecases/send_chat_message_usecase.dart';
+
 import '../../features/library/data/services/assignments_service.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
@@ -410,6 +416,40 @@ List<RouteBase> psychologistRoutes() {
       },
     ),
 
+    // ===== Patient Chat Screen =====
+    GoRoute(
+      path: '/psychologist_patient_chat/:patientId',
+      name: 'psychologist_patient_chat',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        final patientName = state.uri.queryParameters['patientName'] ?? 'Paciente';
+        final patientProfileUrl = state.uri.queryParameters['patientProfileUrl'];
+        
+        return FutureBuilder(
+          future: _buildPatientChatPage(patientId, patientName, patientProfileUrl),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(
+                  child: Text('Error: ${snapshot.error}'),
+                ),
+              );
+            }
+
+            return snapshot.data ?? const Scaffold(
+              body: Center(child: Text('Error al cargar')),
+            );
+          },
+        );
+      },
+    ),
+
     // Crisis Alerts Screen
     GoRoute(
       path: AppRoute.crisisAlerts.path,
@@ -527,5 +567,48 @@ Future<Widget> _buildPatientDetailPage(String patientId) async {
       assignmentsService: assignmentsService,
     )..add(LoadPatientDetail(patientId)),
     child: PatientDetailPage(patientId: patientId),
+  );
+}
+
+// ===== NUEVA FUNCIÓN: Construir página de chat con paciente =====
+Future<Widget> _buildPatientChatPage(
+  String patientId,
+  String patientName,
+  String? patientProfileUrl,
+) async {
+  final userSession = UserSession();
+  final user = await userSession.getUser();
+  
+  if (user?.token == null) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Error: No hay sesión activa'),
+      ),
+    );
+  }
+
+  final httpClient = HttpClient(token: user!.token);
+  final therapyService = TherapyService(httpClient: httpClient);
+  final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+  
+  final getPatientProfileUseCase = GetPatientProfileUseCase(therapyRepository);
+  final getRelationshipWithPatientUseCase = GetRelationshipWithPatientUseCase(therapyRepository);
+  final getChatHistoryUseCase = GetChatHistoryUseCase(therapyRepository);
+  final sendChatMessageUseCase = SendChatMessageUseCase(therapyRepository);
+
+  return BlocProvider(
+    create: (context) => PatientChatBloc(
+      getPatientProfileUseCase: getPatientProfileUseCase,
+      getRelationshipWithPatientUseCase: getRelationshipWithPatientUseCase,
+      getChatHistoryUseCase: getChatHistoryUseCase,
+      sendChatMessageUseCase: sendChatMessageUseCase,
+      therapyRepository: therapyRepository,
+      userSession: userSession,
+    ),
+    child: PatientChatPage(
+      patientId: patientId,
+      patientName: patientName,
+      patientProfileUrl: patientProfileUrl,
+    ),
   );
 }

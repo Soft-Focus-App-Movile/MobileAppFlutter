@@ -31,6 +31,11 @@ import '../../../../features/therapy/presentation/psychologist/patientdetail/blo
 import '../../../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_detail_event.dart';
 import '../../../../features/therapy/domain/usecases/get_patient_profile_usecase.dart';
 import '../../../../features/therapy/domain/usecases/get_patient_check_ins_usecase.dart';
+import '../../../../../../features/therapy/presentation/psychologist/patientdetail/pages/patient_chat_page.dart';
+import '../../../../../../features/therapy/presentation/psychologist/patientdetail/blocs/patient_chat_bloc.dart';
+import '../../../../../../features/therapy/domain/usecases/get_relationship_with_patient_usecase.dart';
+import '../../../../../../features/therapy/domain/usecases/send_chat_message_usecase.dart';
+import '../../../../../../features/therapy/domain/usecases/get_chat_history_usecase.dart';
 
 import '../../../../features/auth/data/local/user_session.dart';
 import '../../../../core/networking/http_client.dart';
@@ -50,11 +55,28 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
   // Estado para manejar la navegación interna de Pacientes
   String? _selectedPatientId;
 
+  // Estado para manejar la visibilidad del Chat
+  bool _showChat = false;
+  String? _chatPatientName;
+  String? _chatPatientProfileUrl;
+
   // Método público para navegar al detalle
   void showPatientDetail(String patientId) {
     setState(() {
-      _selectedIndex = 1; // Asegurar que estamos en la tab de pacientes
+      _selectedIndex = 1;
       _selectedPatientId = patientId;
+      _showChat = false; // Aseguramos que el chat esté cerrado
+    });
+  }
+
+  // Método público para mostrar el Chat
+  void showPatientChat(String patientId, String patientName, String? profileUrl) {
+    setState(() {
+      _selectedIndex = 1;
+      _selectedPatientId = patientId; // Mantenemos el ID seleccionado
+      _chatPatientName = patientName;
+      _chatPatientProfileUrl = profileUrl;
+      _showChat = true; // Activamos la vista de chat
     });
   }
 
@@ -62,6 +84,9 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
   void showPatientList() {
     setState(() {
       _selectedPatientId = null;
+      _showChat = false;
+      _chatPatientName = null;
+      _chatPatientProfileUrl = null;
     });
   }
 
@@ -72,7 +97,13 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
       canPop: _selectedPatientId == null,
       onPopInvoked: (didPop) {
         if (didPop) return;
-        if (_selectedPatientId != null) {
+        
+        // Lógica de retroceso personalizada
+        if (_showChat) {
+          // Si está en chat, volver al detalle
+          showPatientDetail(_selectedPatientId!);
+        } else if (_selectedPatientId != null) {
+          // Si está en detalle, volver a la lista
           showPatientList();
         }
       },
@@ -82,6 +113,12 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
           onTap: (index) {
             setState(() {
               _selectedIndex = index;
+              // Si cambia de tab, reseteamos la navegación interna de pacientes
+              if (index != 1) {
+                 // Opcional: mantener el estado o resetearlo. 
+                 // Por ahora no lo reseteamos para que al volver siga donde estaba,
+                 // o puedes llamar a showPatientList() si prefieres resetear.
+              }
             });
           },
         ),
@@ -164,12 +201,38 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
   }
 
   Widget _buildPatientsTab() {
-    // Si hay un ID seleccionado, mostramos el detalle, si no, la lista.
+    // 1. Si estamos en modo Chat, mostramos el Chat
+    if (_showChat && _selectedPatientId != null) {
+      return _buildPatientChatPage(
+        _selectedPatientId!, 
+        _chatPatientName ?? 'Paciente', 
+        _chatPatientProfileUrl
+      );
+    }
+    
+    // 2. Si hay un ID seleccionado (y no es chat), mostramos el detalle
     if (_selectedPatientId != null) {
-      // Envolvemos en un sub-scaffold o container para manejar el botón atrás en la AppBar si es necesario
       return _buildPatientDetailPage(_selectedPatientId!);
     }
+    
+    // 3. Por defecto, mostramos la lista
     return _buildPatientListPage();
+  }
+
+  // Método para construir la página de Chat dentro del tab
+  Widget _buildPatientChatPage(String patientId, String patientName, String? profileUrl) {
+    return FutureBuilder(
+      future: _initPatientChatDeps(patientId, patientName, profileUrl),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (snapshot.hasError) {
+          return Scaffold(body: Center(child: Text('Error: ${snapshot.error}')));
+        }
+        return snapshot.data ?? const Scaffold(body: Center(child: Text('Error al cargar')));
+      },
+    );
   }
 
   // Patient Detail Screen =====
@@ -262,6 +325,46 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
     );
   }
 
+  Future<Widget> _initPatientChatDeps(
+    String patientId,
+    String patientName,
+    String? patientProfileUrl,
+  ) async {
+    final userSession = UserSession();
+    final user = await userSession.getUser();
+    
+    if (user?.token == null) {
+      return const Scaffold(
+        body: Center(child: Text('Error: No hay sesión activa')),
+      );
+    }
+
+    final httpClient = HttpClient(token: user!.token);
+    final therapyService = TherapyService(httpClient: httpClient);
+    final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+    
+    final getPatientProfileUseCase = GetPatientProfileUseCase(therapyRepository);
+    final getRelationshipWithPatientUseCase = GetRelationshipWithPatientUseCase(therapyRepository);
+    final getChatHistoryUseCase = GetChatHistoryUseCase(therapyRepository);
+    final sendChatMessageUseCase = SendChatMessageUseCase(therapyRepository);
+
+    return BlocProvider(
+      create: (context) => PatientChatBloc(
+        getPatientProfileUseCase: getPatientProfileUseCase,
+        getRelationshipWithPatientUseCase: getRelationshipWithPatientUseCase,
+        getChatHistoryUseCase: getChatHistoryUseCase,
+        sendChatMessageUseCase: sendChatMessageUseCase,
+        therapyRepository: therapyRepository,
+        userSession: userSession,
+      ),
+      child: PatientChatPage(
+        patientId: patientId,
+        patientName: patientName,
+        patientProfileUrl: patientProfileUrl,
+      ),
+    );
+  }
+
   Widget _buildLibraryPlaceholder() {
     return const LibraryPage();
   }
@@ -300,7 +403,7 @@ class PsychologistScaffoldState extends State<PsychologistScaffold> {
             onNavigateToInvitationCode: () => context.push(AppRoute.invitationCode.path),
             onNavigateToPlan: () => context.push(AppRoute.psychologistPlan.path),
             onNavigateToStats: () => context.push(AppRoute.psychologistStats.path),
-            onNavigateToNotifications: () => context.push(AppRoute.notifications.path),
+            onNavigateToNotifications: () => context.push(AppRoute.notificationPreferences.path),
             onLogout: () async {
               await userSession.clear();
               if (context.mounted) {
