@@ -43,6 +43,7 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   UserType? _userType;
   bool _isLoading = true;
+  bool? _hasTherapist;
   String _currentTab = 'content';
   ContentType _selectedType = ContentType.movie;
   String _searchQuery = '';
@@ -71,10 +72,42 @@ class _LibraryPageState extends State<LibraryPage> {
       _userType = user?.userType ?? UserType.GENERAL;
       _httpClient = HttpClient(token: user?.token);
       _isLoading = false;
-      if (_userType == UserType.PATIENT) {
-        _currentTab = 'assignments';
-      }
     });
+
+    await _checkTherapistRelationship();
+  }
+
+  Future<void> _checkTherapistRelationship() async {
+    if (_userType == UserType.PSYCHOLOGIST) {
+      setState(() {
+        _hasTherapist = false;
+      });
+      return;
+    }
+
+    try {
+      final therapyService = TherapyService(httpClient: _httpClient);
+      final therapyRepository = TherapyRepositoryImpl(service: therapyService);
+      final result = await therapyRepository.getMyRelationship();
+
+      switch (result) {
+        case Success(data: final relationship):
+          setState(() {
+            _hasTherapist = relationship != null && relationship.isActive;
+            if (_hasTherapist == true) {
+              _currentTab = 'assignments';
+            }
+          });
+        case Error():
+          setState(() {
+            _hasTherapist = false;
+          });
+      }
+    } catch (e) {
+      setState(() {
+        _hasTherapist = false;
+      });
+    }
   }
 
   List<ContentType> get _availableTabs {
@@ -84,7 +117,7 @@ class _LibraryPageState extends State<LibraryPage> {
     return [ContentType.movie, ContentType.music, ContentType.video];
   }
 
-  bool get _isPatient => _userType == UserType.PATIENT;
+  bool get _isPatient => _hasTherapist == true;
   bool get _isPsychologist => _userType == UserType.PSYCHOLOGIST;
 
   Future<void> _loadPatients() async {
@@ -222,7 +255,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading || _hasTherapist == null) {
       return const Scaffold(
         backgroundColor: black,
         body: Center(child: CircularProgressIndicator(color: green49)),
