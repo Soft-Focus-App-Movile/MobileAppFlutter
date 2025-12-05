@@ -2,7 +2,7 @@ import 'dart:convert';
 import '../../../../core/networking/http_client.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../models/request/favorite_request_dto.dart';
-import '../models/response/content_list_response_dto.dart';
+import '../models/response/favorites_list_response_dto.dart';
 
 class FavoritesService {
   final HttpClient _httpClient;
@@ -10,11 +10,11 @@ class FavoritesService {
   FavoritesService({HttpClient? httpClient})
       : _httpClient = httpClient ?? HttpClient();
 
-  Future<ContentListResponseDto> getFavorites() async {
+  Future<FavoritesListResponseDto> getFavorites() async {
     final response = await _httpClient.get(LibraryEndpoints.favorites);
 
     if (response.statusCode == 200) {
-      return ContentListResponseDto.fromJson(jsonDecode(response.body));
+      return FavoritesListResponseDto.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to get favorites: ${response.body}');
     }

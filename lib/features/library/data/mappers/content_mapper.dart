@@ -17,6 +17,26 @@ class ContentMapper {
   }
 
   static Content fromDto(ContentItemResponseDto dto) {
+    String? finalYoutubeUrl = dto.youtubeUrl;
+    String? finalThumbnailUrl = dto.thumbnailUrl;
+
+    // Construir URLs de YouTube si el externalId es un video de YouTube
+    if (dto.externalId.startsWith('youtube-video-')) {
+      final videoId = dto.externalId.replaceFirst('youtube-video-', '');
+
+      if (videoId.isNotEmpty) {
+        // Construir youtubeUrl si no existe
+        if (finalYoutubeUrl == null || finalYoutubeUrl.isEmpty) {
+          finalYoutubeUrl = 'https://www.youtube.com/watch?v=$videoId';
+        }
+
+        // Construir thumbnailUrl si no existe
+        if (finalThumbnailUrl == null || finalThumbnailUrl.isEmpty) {
+          finalThumbnailUrl = 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg';
+        }
+      }
+    }
+
     return Content(
       externalId: dto.externalId,
       id: dto.id,
@@ -37,8 +57,8 @@ class ContentMapper {
       previewUrl: dto.previewUrl,
       spotifyUrl: dto.spotifyUrl,
       channelName: dto.channelName,
-      youtubeUrl: dto.youtubeUrl,
-      thumbnailUrl: dto.thumbnailUrl,
+      youtubeUrl: finalYoutubeUrl,
+      thumbnailUrl: finalThumbnailUrl,
     );
   }
 

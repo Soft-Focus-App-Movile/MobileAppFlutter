@@ -11,6 +11,7 @@ import '../../data/services/content_search_service.dart';
 import '../../data/services/recommendations_service.dart';
 import '../../data/services/favorites_service.dart';
 import '../../data/services/assignments_service.dart';
+import '../../data/services/videos_search_service.dart';
 import '../blocs/library/library_bloc.dart';
 import '../blocs/library/library_event.dart';
 import '../blocs/library/library_state.dart';
@@ -22,6 +23,7 @@ import '../widgets/search_bar_with_filter.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/content_card.dart';
 import '../widgets/assignments_tab.dart';
+import '../widgets/video_category_selector.dart';
 import 'content_detail_page.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -89,7 +91,11 @@ class _LibraryPageState extends State<LibraryPage> {
           create: (context) => LibraryBloc(
             contentSearchService: ContentSearchService(httpClient: _httpClient),
             recommendationsService: RecommendationsService(httpClient: _httpClient),
-          )..add(SearchContent(type: _selectedType.name)),
+            favoritesService: FavoritesService(httpClient: _httpClient),
+            videosSearchService: VideosSearchService(httpClient: _httpClient),
+          )
+            ..add(const LoadFavoritesIds())
+            ..add(SearchContent(type: _selectedType.name)),
         ),
         BlocProvider(
           create: (context) => FavoritesBloc(
@@ -137,9 +143,22 @@ class _LibraryPageState extends State<LibraryPage> {
                     ));
                   },
                 ),
-                if (_currentTab == 'content' &&
-                    (_selectedType == ContentType.movie || _selectedType == ContentType.music))
-                  SearchBarWithFilter(
+                if (_currentTab == 'content')
+                  if (_selectedType == ContentType.video)
+                    BlocBuilder<LibraryBloc, LibraryState>(
+                      builder: (context, state) {
+                        return VideoCategorySelector(
+                          selectedCategory: state.selectedVideoCategory,
+                          onCategorySelected: (category) {
+                            context.read<LibraryBloc>().add(
+                                  SelectVideoCategory(category: category),
+                                );
+                          },
+                        );
+                      },
+                    )
+                  else if (_selectedType == ContentType.movie || _selectedType == ContentType.music)
+                    SearchBarWithFilter(
                     searchQuery: _searchQuery,
                     onSearchQueryChange: (query) {
                       setState(() {
@@ -170,26 +189,43 @@ class _LibraryPageState extends State<LibraryPage> {
                       });
                     },
                     onFilterClick: () {
-                      final libraryBloc = context.read<LibraryBloc>();
                       showModalBottomSheet(
                         context: context,
                         backgroundColor: Colors.transparent,
-                        builder: (_) => FilterBottomSheet(
-                          selectedEmotion: libraryBloc.state.selectedEmotion,
-                          onEmotionSelected: (emotion) {
-                            libraryBloc.add(
-                              SearchContent(
-                                type: _selectedType.name,
-                                emotion: emotion,
-                                query: _searchQuery.isNotEmpty ? _searchQuery : null,
-                              ),
-                            );
-                          },
-                          onClearFilters: () {
-                            libraryBloc.add(
-                              SearchContent(type: _selectedType.name),
-                            );
-                          },
+                        isScrollControlled: true,
+                        builder: (modalContext) => BlocProvider.value(
+                          value: context.read<LibraryBloc>(),
+                          child: BlocBuilder<LibraryBloc, LibraryState>(
+                            builder: (context, state) {
+                              return FilterBottomSheet(
+                                contentType: _selectedType.name,
+                                selectedEmotion: state.selectedEmotion,
+                                showOnlyFavorites: state.showOnlyFavorites,
+                                onEmotionSelected: (emotion) {
+                                  context.read<LibraryBloc>().add(
+                                        SearchContent(
+                                          type: _selectedType.name,
+                                          emotion: emotion,
+                                          query: _searchQuery.isNotEmpty ? _searchQuery : null,
+                                        ),
+                                      );
+                                },
+                                onFavoritesToggled: (showFavorites) {
+                                  context.read<LibraryBloc>().add(
+                                        ToggleFavoritesFilter(showOnlyFavorites: showFavorites),
+                                      );
+                                },
+                                onClearFilters: () {
+                                  context.read<LibraryBloc>().add(
+                                        SearchContent(
+                                          type: _selectedType.name,
+                                          showOnlyFavorites: false,
+                                        ),
+                                      );
+                                },
+                              );
+                            },
+                          ),
                         ),
                       );
                     },
@@ -280,7 +316,26 @@ class _LibraryPageState extends State<LibraryPage> {
                     onTap: () async {
                       final content = contentUi.content;
 
-                      if (content.isMusic) {
+                      if (content.isVideo) {
+                        final youtubeUrl = content.youtubeUrl;
+
+                        if (youtubeUrl != null && youtubeUrl.isNotEmpty) {
+                          final uri = Uri.parse(youtubeUrl);
+                          if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('No se pudo abrir YouTube')),
+                              );
+                            }
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Este video no tiene URL de YouTube')),
+                            );
+                          }
+                        }
+                      } else if (content.isMusic) {
                         final musicUrl = content.spotifyUrl ?? content.externalUrl;
 
                         if (musicUrl != null && musicUrl.isNotEmpty) {

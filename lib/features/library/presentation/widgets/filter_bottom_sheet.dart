@@ -31,14 +31,20 @@ enum EmotionalTag {
 }
 
 class FilterBottomSheet extends StatelessWidget {
+  final String contentType;
   final String? selectedEmotion;
+  final bool showOnlyFavorites;
   final Function(String?) onEmotionSelected;
+  final Function(bool) onFavoritesToggled;
   final VoidCallback onClearFilters;
 
   const FilterBottomSheet({
     super.key,
+    required this.contentType,
     this.selectedEmotion,
+    this.showOnlyFavorites = false,
     required this.onEmotionSelected,
+    required this.onFavoritesToggled,
     required this.onClearFilters,
   });
 
@@ -62,6 +68,26 @@ class FilterBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          if (contentType == 'movie' || contentType == 'music') ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Solo favoritos',
+                  style: sourceSansSemiBold.copyWith(
+                    fontSize: 14,
+                    color: green29,
+                  ),
+                ),
+                Switch(
+                  value: showOnlyFavorites,
+                  onChanged: onFavoritesToggled,
+                  activeColor: green49,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
           Text(
             'Filtrar por emoción',
             style: sourceSansSemiBold.copyWith(
