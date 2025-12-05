@@ -163,42 +163,41 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: content.posterImage,
-                  width: 100,
-                  height: 140,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: content.posterImage,
                     width: 100,
-                    height: 140,
-                    color: gray828,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: green49),
+                    height: 150,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 100,
+                      height: 150,
+                      color: gray828,
+                      child: const Center(
+                        child: CircularProgressIndicator(color: green49),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 100,
+                      height: 150,
+                      color: gray828,
                     ),
                   ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 100,
-                    height: 140,
-                    color: gray828,
-                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 140,
+                const SizedBox(width: 12),
+                Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               content.title,
@@ -276,9 +275,9 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                             ],
                           ],
                         ),
-                      ),
-                      Row(
-                        children: [
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () async {
@@ -361,8 +360,8 @@ class _AssignmentsTabState extends State<AssignmentsTab> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
