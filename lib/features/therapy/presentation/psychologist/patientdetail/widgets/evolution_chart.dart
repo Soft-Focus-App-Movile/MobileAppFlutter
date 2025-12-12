@@ -1,3 +1,5 @@
+// lib/features/therapy/presentation/psychologist/patientdetail/widgets/evolution_chart.dart
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../../../core/ui/colors.dart';
@@ -44,13 +46,17 @@ class EvolutionChart extends StatelessWidget {
       );
     }
 
-    // --- CONFIGURACIÓN DE EJES ---
-    // Usamos -0.5 a 6.5 para que el primer día (0) y el último (6) 
-    // tengan margen a los lados y no se corten las barras, 
-    // alineando perfectamente el centro de la barra con el punto de la línea.
-    
-    const double minY = 0;
-    const double maxY = 10;
+    // --- CÁLCULO DE ESCALA COMÚN (Vertical) ---
+    // Obtenemos el valor más alto de AMBAS listas combinadas
+    double maxLineValue = lineData.isNotEmpty ? lineData.reduce(max) : 0;
+    double maxColValue = columnData.isNotEmpty ? columnData.reduce(max) : 0;
+    double globalMax = max(maxLineValue, maxColValue);
+
+    // Definimos un tope común. Si el dato es menor a 10, usamos 10 como base.
+    // Si supera 10, usamos el dato real + 20% de margen.
+    final double commonMaxY = globalMax > 10 ? globalMax * 1.2 : 10;
+
+    // Configuración horizontal
     const double minX = -0.5;
     const double maxX = 6.5;
 
@@ -63,8 +69,11 @@ class EvolutionChart extends StatelessWidget {
             // CAPA 1: BARRAS (Fondo)
             BarChart(
               BarChartData(
-                minY: minY,
-                maxY: maxY,
+                minY: 0,
+                // AHORA: Usamos el mismo máximo que la línea
+                maxY: commonMaxY, 
+                // AHORA: Mantenemos spaceAround para la alineación horizontal correcta
+                alignment: BarChartAlignment.spaceAround,
                 
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
@@ -75,8 +84,7 @@ class EvolutionChart extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 30, // Reservamos el mismo espacio
-                      // IMPORTANTE: Devolvemos vacío para no duplicar texto
+                      reservedSize: 30,
                       getTitlesWidget: (value, meta) => const SizedBox.shrink(),
                     ),
                   ),
@@ -105,24 +113,24 @@ class EvolutionChart extends StatelessWidget {
               LineChartData(
                 minX: minX,
                 maxX: maxX,
-                minY: minY,
-                maxY: maxY,
+                minY: 0,
+                // AHORA: Usamos el mismo máximo que las barras
+                maxY: commonMaxY,
+                
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
                   leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  // Aquí es donde SÍ dibujamos los textos
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: 1, // Asegura que se pinte cada día
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
                         const days = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
                         final index = value.toInt();
-                        // Verificamos que sea un entero exacto para evitar pintar textos intermedios
                         if (value == index.toDouble() && index >= 0 && index < days.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
@@ -155,7 +163,6 @@ class EvolutionChart extends StatelessWidget {
                     isStrokeCapRound: true,
                     dotData: FlDotData(
                       show: true,
-                      // Solo mostramos el punto si hay valor (y > 0) para limpiar visualmente
                       checkToShowDot: (spot, barData) => spot.y > 0,
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
