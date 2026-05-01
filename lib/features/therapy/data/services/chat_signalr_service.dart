@@ -16,7 +16,7 @@ class ChatSignalRService {
       return;
     }
 
-    const hubUrl = 'http://98.90.172.251:5000/chatHub'; 
+    const hubUrl = 'http://32.194.77.233:5000/chatHub'; 
 
     _hubConnection = HubConnectionBuilder()
         .withUrl(hubUrl, options: HttpConnectionOptions(

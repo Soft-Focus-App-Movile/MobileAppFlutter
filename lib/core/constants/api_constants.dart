@@ -2,7 +2,7 @@ class ApiConstants {
   // Private constructor to prevent instantiation
   ApiConstants._();
 
-  static const String baseUrl = "http://98.90.172.251:5000/api/v1/";
+  static const String baseUrl = "http://32.194.77.233:5000/api/v1/";
 
   // Google OAuth Client IDs
   // Web Client ID - Used for serverClientId in Credential Manager and backend verification
