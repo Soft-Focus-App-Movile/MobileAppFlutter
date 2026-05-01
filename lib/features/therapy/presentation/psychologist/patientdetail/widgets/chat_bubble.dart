@@ -47,28 +47,32 @@ class ChatBubble extends StatelessWidget {
           horizontal: 12,
           vertical: 8,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.content,
-              style: sourceSansRegular.copyWith(
-                fontSize: 15,
-                color: black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                time,
+        // Ajusta el contenedor al ancho del texto
+        child: IntrinsicWidth(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message.content,
                 style: sourceSansRegular.copyWith(
-                  fontSize: 12,
-                  color: gray808,
+                  fontSize: 15,
+                  color: black,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              // Ahora este Align se limitará al ancho definido por el texto de arriba
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  time,
+                  style: sourceSansRegular.copyWith(
+                    fontSize: 12,
+                    color: gray808,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
